@@ -8,8 +8,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Fetch laptop products
         const resLaptop = await fetch('/techshop-ai-template/api/get_products.php?cat=Laptop');
         let laptops = await resLaptop.json();
-        // Limit to 4 items
-        laptops = laptops.slice(0, 4);
+        // Sắp xếp giảm dần theo id để sản phẩm mới nhất lên đầu
+        laptops.sort((a, b) => b.id - a.id);
+        // Giới hạn 8 sản phẩm hiển thị
+        laptops = laptops.slice(0, 8);
         laptopContainer.innerHTML = laptops.map(p => `
             <div class="product-card">
                 <img src="assets/images/${p.image}" alt="${p.name}" />
@@ -21,7 +23,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Fetch linh kiện products
         const resLinhkien = await fetch('/techshop-ai-template/api/get_products.php?cat=' + encodeURIComponent('Linh kiện'));
         let linhkiens = await resLinhkien.json();
-        linhkiens = linhkiens.slice(0, 4);
+        // Sắp xếp giảm dần theo id
+        linhkiens.sort((a, b) => b.id - a.id);
+        // Hiển thị tối đa 8 sản phẩm linh kiện
+        linhkiens = linhkiens.slice(0, 8);
         linhkienContainer.innerHTML = linhkiens.map(p => `
             <div class="product-card">
                 <img src="assets/images/${p.image}" alt="${p.name}" />

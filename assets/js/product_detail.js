@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const res = await fetch(`/techshop-ai-template/api/get_product_detail.php?id=${productId}`);
         const p = await res.json();
+        // Đặt đường dẫn ảnh dựa trên thư mục assets để hiển thị đúng
         document.getElementById('prod-img').src = `assets/images/${p.image}`;
         document.getElementById('prod-name').textContent = p.name;
         document.getElementById('prod-desc').textContent = p.description;

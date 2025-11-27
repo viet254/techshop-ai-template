@@ -16,18 +16,18 @@ if (isset($_SESSION['user'])) {
     <div class="auth-card">
         <h2>Đăng ký tài khoản</h2>
         <form id="register-form" method="post">
-            <label for="reg-username">Tên đăng nhập:</label>
-            <input type="text" id="reg-username" name="username" required />
-
-            <label for="reg-email">Email:</label>
-            <input type="email" id="reg-email" name="email" required />
-
-            <label for="reg-password">Mật khẩu:</label>
-            <input type="password" id="reg-password" name="password" required />
-
-            <label for="reg-confirm-password">Xác nhận mật khẩu:</label>
-            <input type="password" id="reg-confirm-password" name="confirm_password" required />
-
+            <label>Tên đăng nhập:
+                <input type="text" id="reg-username" name="username" required />
+            </label>
+            <label>Email:
+                <input type="email" id="reg-email" name="email" required />
+            </label>
+            <label>Mật khẩu:
+                <input type="password" id="reg-password" name="password" required />
+            </label>
+            <label>Xác nhận mật khẩu:
+                <input type="password" id="reg-confirm-password" name="confirm_password" required />
+            </label>
             <button type="submit">Đăng ký</button>
         </form>
         <p>Bạn đã có tài khoản? <a href="/techshop-ai-template/login.php">Đăng nhập</a>.</p>

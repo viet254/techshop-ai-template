@@ -13,6 +13,8 @@ $isAdmin = $isLoggedIn && ($_SESSION['user']['role'] ?? 'user') === 'admin';
     <meta charset="UTF-8">
     <title>TechShop AI</title>
     <link rel="stylesheet" href="/techshop-ai-template/assets/css/style.css">
+    <!-- Estore theme overrides: load after main stylesheet -->
+    <link rel="stylesheet" href="/techshop-ai-template/assets/css/estore.css">
     <script src="/techshop-ai-template/assets/js/chatbox.js" defer></script>
 </head>
 <body>
@@ -37,8 +39,7 @@ $isAdmin = $isLoggedIn && ($_SESSION['user']['role'] ?? 'user') === 'admin';
                     <a href="/techshop-ai-template/api/logout.php">Đăng xuất</a>
                 </div>
             <?php else: ?>
-                <!-- Hiển thị liên kết đăng nhập/đăng ký trực tiếp để có thể ấn -->
-                <div class="auth-links">
+                <div class="user-dropdown">
                     <a href="/techshop-ai-template/login.php">Đăng nhập</a>
                     <a href="/techshop-ai-template/register.php">Đăng ký</a>
                 </div>

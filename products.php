@@ -1,7 +1,6 @@
 <?php
 // Trang danh sách sản phẩm
 include __DIR__ . '/includes/header.php';
-// Cho phép xem sản phẩm mà không cần đăng nhập
 ?>
 <main class="main-content">
     <h2>Danh sách sản phẩm</h2>

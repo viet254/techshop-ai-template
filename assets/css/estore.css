@@ -1,0 +1,222 @@
+/*
+ * Estore theme overrides for TechShop AI
+ *
+ * This file introduces a modern e-commerce look inspired by popular
+ * Vietnamese e-stores. It includes a two-column home layout (menu + content),
+ * a hero banner with promotional cards and call-to-action buttons, and
+ * refined product card hover effects. Import this stylesheet after the main
+ * style.css to override default rules.
+ */
+
+/* Hero banner tổng thể */
+.hero-banner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.1fr);
+    gap: 24px;
+    margin-bottom: 28px;
+    padding: 20px 22px;
+    border-radius: 20px;
+    background: radial-gradient(circle at top left, #1d4ed8, #0f172a);
+    color: #ffffff;
+}
+
+/* Phần chữ trong hero */
+.hero-main h1 {
+    font-size: 26px;
+    margin: 8px 0 10px;
+}
+
+.hero-main p {
+    font-size: 14px;
+    max-width: 440px;
+    color: #e5e7eb;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.4);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* Nút trong hero */
+.hero-actions {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.btn-primary,
+.btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 18px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: #ffdd33;
+    color: #111827;
+}
+
+.btn-primary:hover {
+    background: #fbbf24;
+}
+
+.btn-outline {
+    border: 1px solid rgba(248, 250, 252, 0.9);
+    color: #e5e7eb;
+}
+
+.btn-outline:hover {
+    background: rgba(15, 23, 42, 0.5);
+}
+
+/* Grid promos trong hero */
+.hero-promos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 1fr;
+    gap: 10px;
+}
+
+.hero-promo {
+    position: relative;
+    display: block;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #0f172a;
+}
+
+.hero-promo img {
+    width: 100%;
+    height: 100%;
+    min-height: 110px;
+    object-fit: cover;
+    transition: transform 0.25s ease;
+}
+
+.hero-promo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.85), transparent);
+    opacity: 0.9;
+}
+
+.hero-promo-text {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    right: 10px;
+    z-index: 1;
+}
+
+.hero-promo-text h3 {
+    margin: 0 0 2px;
+    font-size: 14px;
+}
+
+.hero-promo-text p {
+    margin: 0;
+    font-size: 12px;
+    color: #e5e7eb;
+}
+
+.hero-promo:hover img {
+    transform: scale(1.06);
+}
+
+/* Sắp xếp lại bố cục trang chủ: 2 cột (menu + nội dung) */
+.home-page {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 24px;
+}
+
+/* Ẩn hoàn toàn quảng cáo cũ */
+.ads-left,
+.ads-right {
+    display: none !important;
+}
+
+/* Lưới sản phẩm trang chủ & hover hiệu ứng giống trang meviethoa */
+.home-products {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 18px;
+}
+
+.product-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 14px 14px 12px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22);
+    border-color: #2563eb;
+}
+
+.product-card img {
+    width: 100%;
+    height: 180px;
+    border-radius: 12px;
+    object-fit: contain;
+    background: #f9fafb;
+    transition: transform 0.22s ease;
+}
+
+.product-card:hover img {
+    transform: scale(1.05);
+}
+
+.product-card h4 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0;
+    min-height: 38px;
+}
+
+.product-card p {
+    margin: 0;
+    font-weight: 600;
+    color: #2563eb;
+    font-size: 15px;
+}
+
+.product-card button {
+    margin-top: 6px;
+    width: 100%;
+    padding: 9px 0;
+    border-radius: 999px;
+    border: none;
+    background: #2563eb;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.18s ease;
+}
+
+.product-card button:hover {
+    background: #1d4ed8;
+}
