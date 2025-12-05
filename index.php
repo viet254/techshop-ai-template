@@ -7,15 +7,15 @@ include __DIR__ . '/includes/header.php';
     <!-- Menu danh mục dọc -->
     <nav class="categories-nav">
         <ul>
-            <li><a href="/techshop-ai-template/products.php?cat=Phụ kiện">Chuột - Bàn phím - Tai nghe</a></li>
-            <li><a href="/techshop-ai-template/products.php?cat=Laptop">Laptop</a></li>
-            <li><a href="/techshop-ai-template/products.php?cat=Linh kiện">Linh kiện Laptop</a></li>
-            <li><a href="/techshop-ai-template/products.php?cat=Màn hình - Loa">Màn hình - Loa</a></li>
-            <li><a href="/techshop-ai-template/products.php?cat=SSD">SSD</a></li>
-            <li><a href="/techshop-ai-template/products.php?cat=RAM">RAM</a></li>
-            <li><a href="/techshop-ai-template/products.php?cat=Thẻ nhớ">Thẻ nhớ</a></li>
-            <li><a href="/techshop-ai-template/products.php?cat=USB">USB</a></li>
-            <li><a href="/techshop-ai-template/products.php?cat=HDD">HDD</a></li>
+            <li><a href="products.php?cat=Phụ kiện">Chuột - Bàn phím - Tai nghe</a></li>
+            <li><a href="products.php?cat=Laptop">Laptop</a></li>
+            <li><a href="products.php?cat=Linh kiện">Linh kiện</a></li>
+            <li><a href="products.php?cat=Màn hình - Loa">Màn hình - Loa</a></li>
+            <li><a href="products.php?cat=SSD">SSD</a></li>
+            <li><a href="products.php?cat=RAM">RAM</a></li>
+            <li><a href="products.php?cat=Thẻ nhớ">Thẻ nhớ</a></li>
+            <li><a href="products.php?cat=USB">USB</a></li>
+            <li><a href="products.php?cat=HDD">HDD</a></li>
         </ul>
     </nav>
     <!-- Nội dung chính -->
@@ -74,8 +74,13 @@ include __DIR__ . '/includes/header.php';
             <h3>Linh kiện nổi bật</h3>
             <div id="home-linhkien" class="home-products"></div>
         </div>
+        <!-- Mục giảm giá sâu: hiển thị các sản phẩm có mức giảm giá lớn -->
+        <div class="home-section">
+            <h3>Giảm giá sâu</h3>
+            <div id="home-discount" class="home-products"></div>
+        </div>
     </section>
 </main>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
-<script src="/techshop-ai-template/assets/js/home.js" defer></script>
+<script src="assets/js/home.js" defer></script>

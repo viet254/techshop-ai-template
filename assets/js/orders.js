@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Tải danh sách đơn hàng từ server
     try {
-        const res = await fetch('/techshop-ai-template/api/get_order_history.php');
+        const res = await fetch('/api/get_order_history.php', { credentials: 'same-origin' });
         orders = await res.json();
     } catch (err) {
         console.error(err);
@@ -52,12 +52,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 cancelBtnHtml = `<button class="cancel-order" data-id="${order.id}">Hủy đơn</button>`;
             }
             div.innerHTML = `
-                <p>Mã đơn: <a href="/techshop-ai-template/order_detail.php?id=${order.id}">#${order.id}</a></p>
+                <p>Mã đơn: <a href="/order_detail.php?id=${order.id}">#${order.id}</a></p>
                 <p>Ngày tạo: ${order.created_at}</p>
                 <p>Tổng: ${Number(order.final_total).toLocaleString()}₫</p>
                 <p>Trạng thái: ${statusText}</p>
                 ${cancelBtnHtml}
             `;
+            // Khi click vào thẻ đơn hàng, điều hướng tới trang chi tiết (trừ khi nhấn nút Hủy)
+            div.addEventListener('click', function(e) {
+                // Nếu click vào nút hủy đơn thì không chuyển trang
+                if (e.target && (e.target.classList && e.target.classList.contains('cancel-order'))) return;
+                // Nếu click vào liên kết cụ thể thì để liên kết hoạt động
+                if (e.target && e.target.tagName && e.target.tagName.toLowerCase() === 'a') return;
+                window.location.href = `/order_detail.php?id=${order.id}`;
+            });
             container.appendChild(div);
         });
         // Gắn sự kiện cho các nút hủy đơn
@@ -92,26 +100,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Lấy radio được chọn
         const selected = [...cancelReasonRadios()].find(r => r.checked);
         if (!selected) {
-            alert('Vui lòng chọn lý do hủy!');
+            // Notify error if no reason selected
+            showNotification('Vui lòng chọn lý do hủy!', 'error');
             return;
         }
         let reason = selected.value;
         if (reason === 'Khác') {
             reason = cancelOtherInput.value.trim();
             if (!reason) {
-                alert('Vui lòng nhập lý do khác!');
+                showNotification('Vui lòng nhập lý do khác!', 'error');
                 return;
             }
         }
         try {
-            const res = await fetch('/techshop-ai-template/api/cancel_order.php', {
+            const res = await fetch('/api/cancel_order.php', { credentials: 'same-origin',
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ order_id: currentCancelOrderId, reason })
             });
             const data = await res.json();
             if (data.success) {
-                alert(data.message || 'Đơn hàng đã được hủy.');
+                showNotification(data.message || 'Đơn hàng đã được hủy.', 'success');
                 // Cập nhật trạng thái trong mảng orders
                 orders = orders.map(o => o.id === currentCancelOrderId ? { ...o, status: 'Cancelled' } : o);
                 // Ẩn modal
@@ -121,11 +130,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const activeStatus = document.querySelector('.orders-nav .active').getAttribute('data-status');
                 renderOrders(activeStatus);
             } else {
-                alert(data.error || 'Không thể hủy đơn hàng');
+                showNotification(data.error || 'Không thể hủy đơn hàng', 'error');
             }
         } catch (err) {
             console.error(err);
-            alert('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+            showNotification('Đã xảy ra lỗi. Vui lòng thử lại sau.', 'error');
         }
     });
     // Nút đóng modal

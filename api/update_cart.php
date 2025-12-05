@@ -28,7 +28,16 @@ if ($qty <= 0) {
     $res = $stmt->get_result();
     $row = $res->fetch_assoc();
     if ($row && $qty > $row['stock']) {
-        echo json_encode(['success' => false, 'message' => 'Vượt quá số lượng tồn kho']);
+        // Nếu số lượng vượt quá tồn kho, chuyển về số lượng tối đa và thông báo
+        $qty = (int)$row['stock'];
+        $_SESSION['cart'][$id]['quantity'] = $qty;
+        if (isset($_SESSION['user'])) {
+            $userId = (int)$_SESSION['user']['id'];
+            $updateCart = $conn->prepare("UPDATE cart_items SET quantity = ? WHERE user_id = ? AND product_id = ?");
+            $updateCart->bind_param('iii', $qty, $userId, $id);
+            $updateCart->execute();
+        }
+        echo json_encode(['success' => true, 'adjusted' => true, 'message' => 'Vượt quá số lượng tồn kho, đã chuyển về số lượng tối đa', 'cart' => $_SESSION['cart']]);
         exit;
     }
     $_SESSION['cart'][$id]['quantity'] = $qty;

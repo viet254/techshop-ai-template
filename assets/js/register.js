@@ -8,24 +8,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('reg-password').value;
         const confirm = document.getElementById('reg-confirm-password').value;
         if (password !== confirm) {
-            alert('Mật khẩu xác nhận không khớp.');
+            // Password confirmation mismatch
+            showNotification('Mật khẩu xác nhận không khớp.', 'error');
             return;
         }
         try {
-            const res = await fetch('/techshop-ai-template/api/register.php', {
+            const res = await fetch('/api/register.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, email, password })
             });
             const data = await res.json();
             if (data.success) {
-                alert('Đăng ký thành công, vui lòng đăng nhập.');
-                location.href = '/techshop-ai-template/login.php';
+                // Notify success and then redirect to login after a short delay
+                showNotification(data.message || 'Đăng ký thành công, vui lòng đăng nhập.', 'success');
+                setTimeout(() => {
+                    location.href = '/login.php';
+                }, 1500);
             } else {
-                alert(data.message || 'Đăng ký thất bại.');
+                showNotification(data.message || 'Đăng ký thất bại.', 'error');
             }
         } catch (err) {
-            alert('Không thể đăng ký.');
+            showNotification('Không thể đăng ký.', 'error');
         }
     });
 });

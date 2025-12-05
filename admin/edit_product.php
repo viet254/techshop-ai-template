@@ -26,14 +26,25 @@ if (!$product) {
         <label>Giá (VND):
             <input type="number" name="price" step="0.01" value="<?= $product['price'] ?>" required />
         </label>
+        <label>Giá khuyến mãi (VND):
+            <input type="number" name="sale_price" step="0.01" value="<?= isset($product['sale_price']) ? $product['sale_price'] : '' ?>" />
+        </label>
         <label>Danh mục:
             <input type="text" name="category" value="<?= htmlspecialchars($product['category']) ?>" />
         </label>
         <label>Tồn kho:
             <input type="number" name="stock" value="<?= $product['stock'] ?>" />
         </label>
-        <label>Tên file ảnh:
-            <input type="text" name="image" value="<?= htmlspecialchars($product['image']) ?>" />
+        <label>Thông số kỹ thuật:
+            <textarea name="specs"><?= htmlspecialchars($product['specs'] ?? '') ?></textarea>
+        </label>
+        <label>Ảnh sản phẩm:
+            <!-- ẩn đường dẫn ảnh hiện tại, sử dụng khi không tải lên file mới -->
+            <input type="hidden" name="current_image" value="<?= htmlspecialchars($product['image']) ?>" />
+            <input type="file" name="image_file" accept="image/*" />
+            <?php if (!empty($product['image'])): ?>
+                <small>Ảnh hiện tại: <?= htmlspecialchars($product['image']) ?></small>
+            <?php endif; ?>
         </label>
         <label>Mô tả:
             <textarea name="description"><?= htmlspecialchars($product['description']) ?></textarea>

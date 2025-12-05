@@ -1,0 +1,22 @@
+2025-12-02 11:45:29 HTTP:429
+{
+    "error": {
+        "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.",
+        "type": "insufficient_quota",
+        "param": null,
+        "code": "insufficient_quota"
+    }
+}
+
+
+2025-12-02 11:59:02 HTTP:401
+{
+    "error": {
+        "message": "Incorrect API key provided: AIzaSyCw***************************WV3E. You can find your API key at https://platform.openai.com/account/api-keys.",
+        "type": "invalid_request_error",
+        "param": null,
+        "code": "invalid_api_key"
+    }
+}
+
+

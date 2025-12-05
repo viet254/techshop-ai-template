@@ -11,6 +11,8 @@ if (!isset($_SESSION['user'])) {
 $data = json_decode(file_get_contents('php://input'), true);
 $addressId = isset($data['address_id']) ? (int)$data['address_id'] : 0;
 $voucherCode = isset($data['voucher_code']) ? trim($data['voucher_code']) : '';
+// Phương thức thanh toán (mặc định thanh toán khi nhận hàng)
+$paymentMethod = isset($data['payment_method']) ? trim($data['payment_method']) : 'cod';
 
 // Xác định người dùng
 $userId = (int)$_SESSION['user']['id'];
@@ -114,5 +116,13 @@ unset($_SESSION['cart']);
 $delCart = $conn->prepare("DELETE FROM cart_items WHERE user_id = ?");
 $delCart->bind_param('i', $userId);
 $delCart->execute();
-echo json_encode(['success' => true, 'order_id' => $orderId, 'total' => $total, 'discount' => $discount, 'final_total' => $finalTotal, 'voucher_code' => $voucherCode]);
+echo json_encode([
+    'success'      => true,
+    'order_id'     => $orderId,
+    'total'        => $total,
+    'discount'     => $discount,
+    'final_total'  => $finalTotal,
+    'voucher_code' => $voucherCode,
+    'payment_method' => $paymentMethod
+]);
 ?>

@@ -25,28 +25,48 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 async function loadOrders() {
     try {
-        const res = await fetch('/techshop-ai-template/api/get_admin_orders.php');
+        const res = await fetch('/api/get_admin_orders.php');
         const orders = await res.json();
         const tbody = document.querySelector('#orders-table tbody');
         tbody.innerHTML = '';
+        // Danh sách trạng thái với nhãn tiếng Việt. Giá trị giữ nguyên để gửi cho API.
+        const statusList = [
+            { value: 'Pending', label: 'Đang chờ' },
+            { value: 'Processing', label: 'Đang xử lý' },
+            { value: 'Shipping', label: 'Đang giao' },
+            { value: 'Completed', label: 'Hoàn thành' },
+            { value: 'Cancelled', label: 'Đã hủy' }
+        ];
         orders.forEach(order => {
             const tr = document.createElement('tr');
+            // Tạo các option cho select với nhãn tiếng Việt và đánh dấu chọn phù hợp
+            const optionsHtml = statusList.map(st => {
+                const selected = (order.status || '').toLowerCase() === st.value.toLowerCase() ? 'selected' : '';
+                return `<option value="${st.value}" ${selected}>${st.label}</option>`;
+            }).join('');
             tr.innerHTML = `
-                <td><a href="/techshop-ai-template/admin/order_detail.php?id=${order.id}">#${order.id}</a></td>
+                <td><a href="/admin/order_detail.php?id=${order.id}">#${order.id}</a></td>
                 <td>${order.username || 'Unknown'}</td>
                 <td>${Number(order.final_total).toLocaleString()}₫</td>
                 <td>
                     <select data-id="${order.id}" onchange="changeStatus(this)">
-                        <option value="Pending" ${order.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                        <option value="Processing" ${order.status === 'Processing' ? 'selected' : ''}>Processing</option>
-                        <option value="Shipping" ${order.status === 'Shipping' ? 'selected' : ''}>Shipping</option>
-                        <option value="Completed" ${order.status === 'Completed' ? 'selected' : ''}>Completed</option>
-                        <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                        ${optionsHtml}
                     </select>
                 </td>
                 <td>${order.created_at}</td>
-                <td><button onclick="updateOrder(${order.id}, this.previousElementSibling.value)">Cập nhật</button></td>
+                <td>
+                    <button class="btn-edit" onclick="updateOrder(${order.id}, this.parentElement.parentElement.querySelector('select').value)"><span class="icon">🔄</span> Cập nhật</button>
+                    <button class="btn-delete" onclick="deleteOrder(${order.id}, this)"><span class="icon">🗑️</span> Xóa</button>
+                </td>
             `;
+            // Cho phép click vào hàng để xem chi tiết đơn hàng (trừ khi bấm vào nút hoặc chọn trạng thái)
+            tr.addEventListener('click', function(e) {
+                const tag = e.target.tagName.toLowerCase();
+                if (tag === 'button' || tag === 'select' || tag === 'option' || (e.target.closest('button') !== null) || (e.target.closest('select') !== null)) {
+                    return;
+                }
+                window.location.href = `/admin/order_detail.php?id=${order.id}`;
+            });
             tbody.appendChild(tr);
         });
     } catch (err) {
@@ -58,15 +78,42 @@ function changeStatus(select) {
 }
 async function updateOrder(orderId, status) {
     try {
-        const res = await fetch('/techshop-ai-template/api/update_order_status.php', {
+        const res = await fetch('/api/update_order_status.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: orderId, status })
         });
         const data = await res.json();
-        if (!data.success) alert(data.message || 'Cập nhật thất bại');
+        if (!data.success) {
+            showNotification(data.message || 'Cập nhật thất bại', 'error');
+        }
     } catch (err) {
-        alert('Không thể cập nhật đơn hàng.');
+        showNotification('Không thể cập nhật đơn hàng.', 'error');
+    }
+}
+
+// Hàm xóa đơn hàng
+async function deleteOrder(orderId, btn) {
+    if (!confirm('Bạn có chắc chắn muốn xóa đơn hàng #' + orderId + ' không?')) {
+        return;
+    }
+    try {
+        const res = await fetch('/api/delete_order.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: orderId })
+        });
+        const data = await res.json();
+        if (data && data.success) {
+            // Xóa hàng khỏi bảng
+            const row = btn.closest('tr');
+            if (row) row.remove();
+            showNotification(data.message || 'Đã xóa đơn hàng.', 'success');
+        } else {
+            showNotification(data.message || 'Không thể xóa đơn hàng.', 'error');
+        }
+    } catch (err) {
+        showNotification('Không thể xóa đơn hàng.', 'error');
     }
 }
 </script>

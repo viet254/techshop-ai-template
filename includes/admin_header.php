@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 if (!isset($_SESSION['user']) || ($_SESSION['user']['role'] ?? '') !== 'admin') {
     // Redirect to login if not an admin
-    header('Location: /techshop-ai-template/login.php');
+    header('Location: /login.php');
     exit;
 }
 $username = htmlspecialchars($_SESSION['user']['username'] ?? '');
@@ -16,23 +16,24 @@ $username = htmlspecialchars($_SESSION['user']['username'] ?? '');
 <head>
     <meta charset="UTF-8">
     <title>TechShop AI Admin</title>
-    <link rel="stylesheet" href="/techshop-ai-template/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
 <header class="admin-header">
     <div class="admin-logo">
-        <a href="/techshop-ai-template/admin/dashboard.php">TechShop <span>AI</span> Admin</a>
+        <a href="/admin/dashboard.php">TechShop <span>AI</span> Admin</a>
     </div>
     <div class="admin-user">
         Xin chào, <?= $username ?>
-        | <a href="/techshop-ai-template/api/logout.php">Đăng xuất</a>
+        | <a href="/api/logout.php">Đăng xuất</a>
     </div>
 </header>
 <nav class="admin-main-nav">
-    <a href="/techshop-ai-template/admin/dashboard.php">Bảng điều khiển</a>
-    <a href="/techshop-ai-template/admin/manage_products.php">Sản phẩm</a>
-    <a href="/techshop-ai-template/admin/manage_orders.php">Đơn hàng</a>
-    <a href="/techshop-ai-template/admin/manage_vouchers.php">Voucher</a>
-    <a href="/techshop-ai-template/admin/manage_users.php">Người dùng</a>
+    <a href="/admin/dashboard.php">Bảng điều khiển</a>
+    <a href="/admin/manage_products.php">Sản phẩm</a>
+    <a href="/admin/manage_orders.php">Đơn hàng</a>
+    <a href="/admin/manage_vouchers.php">Voucher</a>
+    <a href="/admin/manage_users.php">Người dùng</a>
 </nav>
+<script src="/assets/js/notify.js"></script>
 <main class="admin-content">

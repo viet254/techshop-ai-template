@@ -6,24 +6,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
         try {
-            const res = await fetch('/techshop-ai-template/api/login.php', {
+            const res = await fetch('/api/login.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
             const data = await res.json();
             if (data.success) {
-                // Nếu là admin, chuyển tới trang quản trị; ngược lại về trang chủ
-                if (data.role && data.role === 'admin') {
-                    location.href = '/techshop-ai-template/admin/dashboard.php';
-                } else {
-                    location.href = '/techshop-ai-template/index.php';
-                }
+                // Determine redirect path based on role
+                const redirectTo = (data.role && data.role === 'admin') ? '/admin/dashboard.php' : '/index.php';
+                // Show success notification and redirect after a short delay
+                showNotification('Đăng nhập thành công.', 'success');
+                setTimeout(() => {
+                    location.href = redirectTo;
+                }, 1500);
             } else {
-                alert(data.message || 'Đăng nhập thất bại.');
+                showNotification(data.message || 'Đăng nhập thất bại.', 'error');
             }
         } catch (err) {
-            alert('Không thể đăng nhập.');
+            showNotification('Không thể đăng nhập.', 'error');
         }
     });
 });

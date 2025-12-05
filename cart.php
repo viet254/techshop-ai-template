@@ -3,7 +3,7 @@
 include __DIR__ . '/includes/header.php';
 // Yêu cầu đăng nhập để truy cập giỏ hàng
 if (!isset($_SESSION['user'])) {
-    header('Location: /techshop-ai-template/login.php');
+    header('Location: /login.php');
     exit;
 }
 ?>
@@ -12,9 +12,10 @@ if (!isset($_SESSION['user'])) {
     <div class="cart-container">
         <h3>Sản phẩm sẽ thanh toán</h3>
         <div class="checkout-options" id="checkout-options" style="margin-bottom:20px;">
-            <!-- Địa chỉ giao hàng và voucher sẽ được load bằng JS -->
-            <div id="address-select-container" style="margin-bottom:10px;"></div>
-            <div id="voucher-container" style="margin-bottom:10px;"></div>
+            <!-- Địa chỉ giao hàng, phương thức thanh toán và voucher sẽ được load bằng JS -->
+            <div id="address-select-container" class="checkout-section" style="margin-bottom:10px;"></div>
+            <div id="payment-select-container" class="checkout-section" style="margin-bottom:10px;"></div>
+            <div id="voucher-container" class="checkout-section" style="margin-bottom:10px;"></div>
             <div id="discount-info" style="font-style: italic; color: #e53935;"></div>
         </div>
         <table class="cart-table" id="cart-table">
@@ -55,4 +56,4 @@ if (!isset($_SESSION['user'])) {
     </div>
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>
-<script src="/techshop-ai-template/assets/js/cart.js" defer></script>
+<script src="assets/js/cart.js" defer></script>

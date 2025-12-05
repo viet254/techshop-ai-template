@@ -3,7 +3,7 @@
 include __DIR__ . '/includes/header.php';
 // Kiểm tra đăng nhập
 if (!isset($_SESSION['user'])) {
-    header('Location: /techshop-ai-template/login.php');
+    header('Location: /login.php');
     exit;
 }
 ?>
@@ -51,4 +51,4 @@ if (!isset($_SESSION['user'])) {
     </div>
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>
-<script src="/techshop-ai-template/assets/js/orders.js" defer></script>
+<script src="assets/js/orders.js" defer></script>

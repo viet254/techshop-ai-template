@@ -10,7 +10,12 @@ if (!isset($_SESSION['user'])) {
 }
 
 $userId = (int)$_SESSION['user']['id'];
-$stmt = $conn->prepare("SELECT id, recipient_name, phone, address FROM addresses WHERE user_id = ? ORDER BY created_at DESC");
+$stmt = $conn->prepare("
+    SELECT id, recipient_name, email, phone, city, district, address
+    FROM addresses
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+");
 $stmt->bind_param('i', $userId);
 $stmt->execute();
 $res = $stmt->get_result();

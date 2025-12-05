@@ -13,42 +13,106 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (addressForm) {
         addressForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const recipient = document.getElementById('addr-recipient').value.trim();
-            const phone = document.getElementById('addr-phone').value.trim();
-            const address = document.getElementById('addr-address').value.trim();
-            if (!recipient || !address) {
-                alert('Tên người nhận và địa chỉ là bắt buộc.');
-                return;
-            }
+
+            const recipientName = document.getElementById('addr-recipient').value.trim();
+            const email         = document.getElementById('addr-email').value.trim();
+            const phone         = document.getElementById('addr-phone').value.trim();
+            const city          = document.getElementById('addr-city').value.trim();
+            const district      = document.getElementById('addr-district').value.trim();
+            const address       = document.getElementById('addr-address').value.trim();
+
             try {
-                const res = await fetch('/techshop-ai-template/api/add_address.php', {
+                const res = await fetch('/api/add_address.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ recipient_name: recipient, phone: phone, address: address })
+                    body: JSON.stringify({
+                        recipient_name: recipientName,
+                        email,
+                        phone,
+                        city,
+                        district,
+                        address
+                    })
                 });
                 const data = await res.json();
-                if (data.error) {
-                    alert(data.error);
-                } else {
-                    document.getElementById('addr-recipient').value = '';
-                    document.getElementById('addr-phone').value = '';
-                    document.getElementById('addr-address').value = '';
-                    loadAddresses();
+                if (!res.ok || !data.success) {
+                    showNotification(data.error || 'Không thể thêm địa chỉ', 'error');
+                    return;
                 }
+                // Thêm thành công -> load lại danh sách và thông báo
+                showNotification(data.message || 'Đã thêm địa chỉ.', 'success');
+                addressForm.reset();
+                loadAddresses();
             } catch (err) {
-                alert('Không thể thêm địa chỉ');
+                console.error(err);
+                showNotification('Có lỗi xảy ra, vui lòng thử lại.', 'error');
+            }
+        });
+    }
+
+    // ==== Dynamic district selection based on province (city) ====
+    const citySelect = document.getElementById('addr-city');
+    const districtSelect = document.getElementById('addr-district');
+    // Mapping of provinces/cities in northern Vietnam to their districts
+    const districtsByProvince = {
+        "Ha Noi": [
+            "Ba Đình", "Hoàn Kiếm", "Hai Bà Trưng", "Đống Đa", "Tây Hồ", "Cầu Giấy", "Thanh Xuân", "Long Biên", "Nam Từ Liêm", "Bắc Từ Liêm", "Hà Đông"
+        ],
+        "Bac Ninh": [
+            "TP Bắc Ninh", "Từ Sơn", "Yên Phong", "Tiên Du", "Thuận Thành", "Gia Bình", "Quế Võ", "Lương Tài"
+        ],
+        "Hai Phong": [
+            "Hồng Bàng", "Ngô Quyền", "Lê Chân", "Kiến An", "Hải An", "Đồ Sơn", "An Dương", "An Lão", "Kiến Thụy"
+        ],
+        "Quang Ninh": [
+            "Hạ Long", "Cẩm Phả", "Uông Bí", "Móng Cái", "Quảng Yên", "Đông Triều", "Vân Đồn", "Tiên Yên"
+        ],
+        "Bac Giang": [
+            "TP Bắc Giang", "Yên Thế", "Tân Yên", "Lục Nam", "Lục Ngạn", "Sơn Động", "Yên Dũng", "Việt Yên", "Lạng Giang", "Hiệp Hòa"
+        ],
+        "Thai Nguyen": [
+            "TP Thái Nguyên", "Sông Công", "Định Hóa", "Phú Lương", "Đồng Hỷ", "Võ Nhai", "Phú Bình"
+        ],
+        "Vinh Phuc": [
+            "TP Vĩnh Yên", "Phúc Yên", "Yên Lạc", "Vĩnh Tường", "Tam Dương", "Tam Đảo", "Sông Lô", "Bình Xuyên"
+        ],
+        "Nam Dinh": [
+            "TP Nam Định", "Mỹ Lộc", "Vụ Bản", "Ý Yên", "Trực Ninh", "Xuân Trường", "Giao Thủy", "Nghĩa Hưng", "Nam Trực", "Hải Hậu"
+        ],
+        "Ninh Binh": [
+            "TP Ninh Bình", "Tam Điệp", "Gia Viễn", "Hoa Lư", "Yên Khánh", "Yên Mô", "Kim Sơn", "Nho Quan"
+        ],
+        "Ha Nam": [
+            "TP Phủ Lý", "Duy Tiên", "Lý Nhân", "Kim Bảng", "Thanh Liêm", "Bình Lục"
+        ],
+        "Hai Duong": [
+            "TP Hải Dương", "Chí Linh", "Nam Sách", "Kinh Môn", "Thanh Hà", "Cẩm Giàng", "Gia Lộc", "Tứ Kỳ", "Ninh Giang", "Thanh Miện"
+        ]
+    };
+    if (citySelect && districtSelect) {
+        citySelect.addEventListener('change', function() {
+            const val = citySelect.value;
+            // Reset districts
+            districtSelect.innerHTML = '<option value="">--- Chọn quận/huyện ---</option>';
+            if (districtsByProvince[val]) {
+                districtsByProvince[val].forEach(function(d) {
+                    const opt = document.createElement('option');
+                    opt.value = d;
+                    opt.textContent = d;
+                    districtSelect.appendChild(opt);
+                });
             }
         });
     }
     // Load vouchers
     loadVouchers();
-    // Bind avatar upload
-    bindAvatarUpload();
+    // Bind avatar change handler with cropping
+    bindChangeAvatar();
 });
 
 async function loadProfile() {
     try {
-        const res = await fetch('/techshop-ai-template/api/get_profile.php');
+        const res = await fetch('/api/get_profile.php');
         const user = await res.json();
         if (user) {
             document.getElementById('profile-name').value = user.name || '';
@@ -56,9 +120,9 @@ async function loadProfile() {
             document.getElementById('profile-phone').value = user.phone || '';
             const avatarPreview = document.getElementById('avatar-preview');
             if (user.avatar) {
-                avatarPreview.src = '/techshop-ai-template/assets/images/avatars/' + user.avatar;
+                avatarPreview.src = '/assets/images/avatars/' + user.avatar;
             } else {
-                avatarPreview.src = '/techshop-ai-template/assets/images/default-avatar.png';
+                avatarPreview.src = '/assets/images/default-avatar.png';
             }
         }
     } catch (err) {
@@ -95,16 +159,16 @@ function bindProfileForms() {
                 phone: document.getElementById('profile-phone').value
             };
             try {
-                const res = await fetch('/techshop-ai-template/api/update_profile.php', {
+                const res = await fetch('/api/update_profile.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
-                alert(data.message || 'Đã cập nhật thông tin.');
+                showNotification(data.message || 'Đã cập nhật thông tin.', 'success');
                 // Reload name in nav if needed (not done here)
             } catch (err) {
-                alert('Không thể cập nhật thông tin.');
+                showNotification('Không thể cập nhật thông tin.', 'error');
             }
         });
     }
@@ -117,61 +181,91 @@ function bindProfileForms() {
             const newPassword = document.getElementById('new-password').value;
             const confirmPassword = document.getElementById('confirm-password').value;
             if (newPassword !== confirmPassword) {
-                alert('Mật khẩu mới và xác nhận không khớp.');
+                showNotification('Mật khẩu mới và xác nhận không khớp.', 'error');
                 return;
             }
             try {
-                const res = await fetch('/techshop-ai-template/api/change_password.php', {
+                const res = await fetch('/api/change_password.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ old_password: oldPassword, new_password: newPassword })
                 });
                 const data = await res.json();
-                alert(data.message || 'Đã đổi mật khẩu.');
+                showNotification(data.message || 'Đã đổi mật khẩu.', 'success');
                 // Clear password fields
                 document.getElementById('old-password').value = '';
                 document.getElementById('new-password').value = '';
                 document.getElementById('confirm-password').value = '';
             } catch (err) {
-                alert('Không thể đổi mật khẩu.');
+                showNotification('Không thể đổi mật khẩu.', 'error');
             }
         });
     }
 }
 
-function bindAvatarUpload() {
-    const avatarInput = document.getElementById('avatar-input');
-    const uploadBtn = document.getElementById('upload-avatar-btn');
-    uploadBtn.addEventListener('click', async (e) => {
+function bindChangeAvatar() {
+    const fileInput = document.getElementById('avatar-input');
+    const changeBtn = document.getElementById('change-avatar-btn');
+    if (!fileInput || !changeBtn) return;
+    // Khi nhấn nút "Thay ảnh" thì mở hộp chọn file
+    changeBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        const file = avatarInput.files[0];
-        if (!file) {
-            alert('Hãy chọn ảnh trước.');
-            return;
-        }
-        const formData = new FormData();
-        formData.append('avatar', file);
-        try {
-            const res = await fetch('/techshop-ai-template/api/upload_avatar.php', {
-                method: 'POST',
-                body: formData
-            });
-            const data = await res.json();
-            if (data.success) {
-                document.getElementById('avatar-preview').src = '/techshop-ai-template/assets/images/avatars/' + data.avatar;
-                alert('Đã cập nhật ảnh đại diện.');
-            } else {
-                alert(data.message || 'Lỗi tải ảnh');
+        fileInput.click();
+    });
+    // Khi người dùng chọn file thì cắt giữa ảnh và tải lên
+    fileInput.addEventListener('change', async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        const img = new Image();
+        img.onload = async function() {
+            // Tính toán vùng cắt trung tâm hình vuông
+            const side = Math.min(img.width, img.height);
+            const sx = (img.width - side) / 2;
+            const sy = (img.height - side) / 2;
+            // Vẽ lên canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = side;
+            canvas.height = side;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, sx, sy, side, side, 0, 0, side, side);
+            // Hiển thị preview của ảnh sau khi cắt
+            const preview = document.getElementById('avatar-preview');
+            if (preview) {
+                preview.src = canvas.toDataURL('image/png');
             }
-        } catch (err) {
-            alert('Không thể tải ảnh.');
-        }
+            // Chuyển canvas thành Blob để tải lên
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                // Sử dụng tên file gốc cho blob nếu có
+                formData.append('avatar', blob, file.name);
+                try {
+                    const res = await fetch('/api/upload_avatar.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await res.json();
+                        if (data.success) {
+                            // Sau khi tải lên thành công, cập nhật preview bằng file đã lưu trong server
+                            preview.src = '/assets/images/avatars/' + data.avatar;
+                            showNotification('Đã cập nhật ảnh đại diện.', 'success');
+                        } else {
+                            showNotification(data.message || 'Lỗi tải ảnh', 'error');
+                        }
+                    } catch (err) {
+                        showNotification('Không thể tải ảnh.', 'error');
+                    }
+            }, 'image/png');
+        };
+        img.onerror = function() {
+            showNotification('Không thể đọc ảnh.', 'error');
+        };
+        img.src = URL.createObjectURL(file);
     });
 }
 
 async function loadAddresses() {
     try {
-        const res = await fetch('/techshop-ai-template/api/get_addresses.php');
+        const res = await fetch('/api/get_addresses.php');
         const list = await res.json();
         const container = document.getElementById('address-list');
         if (!container) return;
@@ -195,19 +289,21 @@ async function loadAddresses() {
                 const id = btn.getAttribute('data-id');
                 if (!confirm('Bạn có chắc muốn xóa địa chỉ này?')) return;
                 try {
-                    const res = await fetch('/techshop-ai-template/api/delete_address.php', {
+                    const res = await fetch('/api/delete_address.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ id: id })
                     });
                     const data = await res.json();
                     if (data.success) {
+                        // Show success notification and reload list
+                        showNotification(data.message || 'Đã xóa địa chỉ.', 'success');
                         loadAddresses();
                     } else {
-                        alert(data.error || 'Không thể xóa địa chỉ');
+                        showNotification(data.error || 'Không thể xóa địa chỉ', 'error');
                     }
                 } catch (err) {
-                    alert('Lỗi xóa địa chỉ');
+                    showNotification('Lỗi xóa địa chỉ', 'error');
                 }
             });
         });
@@ -218,7 +314,7 @@ async function loadAddresses() {
 
 async function loadVouchers() {
     try {
-        const res = await fetch('/techshop-ai-template/api/get_vouchers.php');
+        const res = await fetch('/api/get_vouchers.php');
         const vouchers = await res.json();
         const container = document.getElementById('voucher-list');
         if (!container) return;
@@ -243,7 +339,7 @@ async function loadVouchers() {
 
 async function loadOrders() {
     try {
-        const res = await fetch('/techshop-ai-template/api/get_order_history.php');
+        const res = await fetch('/api/get_order_history.php');
         const orders = await res.json();
         const container = document.getElementById('orders');
         container.innerHTML = '';
@@ -255,7 +351,7 @@ async function loadOrders() {
             const div = document.createElement('div');
             div.className = 'order-item';
             // Liên kết tới trang chi tiết đơn hàng
-            const link = `/techshop-ai-template/order_detail.php?id=${order.id}`;
+            const link = `/order_detail.php?id=${order.id}`;
             div.innerHTML = `
                 <p>Mã đơn: <a href="${link}">#${order.id}</a> | Tổng: ${Number(order.final_total).toLocaleString()}₫ | Trạng thái: ${order.status}</p>
             `;
@@ -266,56 +362,11 @@ async function loadOrders() {
     }
 }
 
-async function loadAddresses() {
-    try {
-        const res = await fetch('/techshop-ai-template/api/get_addresses.php');
-        const list = await res.json();
-        const container = document.getElementById('address-list');
-        container.innerHTML = '';
-        if (!Array.isArray(list) || list.length === 0) {
-            container.innerHTML = '<p>Chưa có địa chỉ giao hàng.</p>';
-            return;
-        }
-        list.forEach(addr => {
-            const div = document.createElement('div');
-            div.className = 'address-item';
-            div.innerHTML = `
-                <p><strong>${addr.recipient_name}</strong> - ${addr.phone || ''}</p>
-                <p>${addr.address}</p>
-                <button data-id="${addr.id}" class="delete-address">Xóa</button>
-            `;
-            container.appendChild(div);
-        });
-        // Gắn sự kiện xoá
-        document.querySelectorAll('.delete-address').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const id = btn.getAttribute('data-id');
-                if (!confirm('Bạn có chắc muốn xóa địa chỉ này?')) return;
-                try {
-                    const res = await fetch('/techshop-ai-template/api/delete_address.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: id })
-                    });
-                    const data = await res.json();
-                    if (data.success) {
-                        loadAddresses();
-                    } else {
-                        alert(data.error || 'Không thể xóa địa chỉ');
-                    }
-                } catch (err) {
-                    alert('Lỗi xóa địa chỉ');
-                }
-            });
-        });
-    } catch (err) {
-        console.error(err);
-    }
-}
+// (Duplicate loadAddresses removed to avoid overriding earlier definition)
 
 async function loadSavedList() {
     try {
-        const res = await fetch('/techshop-ai-template/api/get_saved_list.php');
+        const res = await fetch('/api/get_saved_list.php');
         const items = await res.json();
         const container = document.getElementById('saved-list');
         container.innerHTML = '';

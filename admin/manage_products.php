@@ -11,15 +11,32 @@ if ($result) {
         $products[] = $row;
     }
 }
+
+// Lấy danh sách danh mục duy nhất từ bảng products để dùng cho dropdown
+$categories = [];
+$catRes = $conn->query("SELECT DISTINCT category FROM products WHERE category IS NOT NULL AND category <> '' ORDER BY category ASC");
+if ($catRes) {
+    while ($row = $catRes->fetch_assoc()) {
+        $categories[] = $row['category'];
+    }
+}
 ?>
     <!-- Nội dung trang quản lý sản phẩm -->
-    <h2>Quản lý sản phẩm</h2>
+    <!-- Link to separate add product page -->
+    <h2>Quản lý sản phẩm <a href="add_product.php" class="btn-add-product">Thêm sản phẩm</a></h2>
     <div class="admin-card">
         <h3>Danh sách sản phẩm</h3>
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>ID</th><th>Tên</th><th>Giá</th><th>Danh mục</th><th>Tồn kho</th><th>Hình ảnh</th><th>Hành động</th>
+                    <th>ID</th>
+                    <th>Tên</th>
+                    <th>Giá</th>
+                    <th>Giá khuyến mãi</th>
+                    <th>Danh mục</th>
+                    <th>Tồn kho</th>
+                    <th>Hình ảnh</th>
+                    <th>Hành động</th>
                 </tr>
             </thead>
             <tbody>
@@ -28,6 +45,13 @@ if ($result) {
                     <td><?= $p['id'] ?></td>
                     <td><?= htmlspecialchars($p['name']) ?></td>
                     <td><?= number_format($p['price']) ?>₫</td>
+                    <td>
+                        <?php if (!empty($p['sale_price'])): ?>
+                            <?= number_format($p['sale_price']) ?>₫
+                        <?php else: ?>
+                            —
+                        <?php endif; ?>
+                    </td>
                     <td><?= htmlspecialchars($p['category']) ?></td>
                     <td><?= $p['stock'] ?></td>
                     <td>
@@ -43,37 +67,13 @@ if ($result) {
                         ?>
                     </td>
                     <td>
-                        <a href="edit_product.php?id=<?= $p['id'] ?>">Sửa</a> |
-                        <a href="delete_product.php?id=<?= $p['id'] ?>" onclick="return confirm('Bạn có chắc muốn xóa?');">Xóa</a>
+                        <a href="edit_product.php?id=<?= $p['id'] ?>" class="btn-edit"><span class="icon">✏️</span> Sửa</a>
+                        <a href="delete_product.php?id=<?= $p['id'] ?>" class="btn-delete" onclick="return confirm('Bạn có chắc muốn xóa?');"><span class="icon">🗑️</span> Xóa</a>
                     </td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
-    </div>
-    <div class="admin-card">
-        <h3>Thêm sản phẩm mới</h3>
-        <form class="admin-form" action="create_product.php" method="post">
-            <label>Tên sản phẩm:
-                <input type="text" name="name" required />
-            </label>
-            <label>Giá (VND):
-                <input type="number" name="price" step="0.01" required />
-            </label>
-            <label>Danh mục:
-                <input type="text" name="category" />
-            </label>
-            <label>Tồn kho:
-                <input type="number" name="stock" value="0" />
-            </label>
-            <label>Tên file ảnh (trong assets/images):
-                <input type="text" name="image" value="placeholder.jpg" />
-            </label>
-            <label>Mô tả:
-                <textarea name="description"></textarea>
-            </label>
-            <button type="submit">Thêm</button>
-        </form>
     </div>
 </main>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

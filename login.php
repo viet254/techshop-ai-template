@@ -5,9 +5,9 @@ include __DIR__ . '/includes/header.php';
 if (isset($_SESSION['user'])) {
     // Nếu đã đăng nhập, chuyển hướng tùy theo role
     if (($_SESSION['user']['role'] ?? 'user') === 'admin') {
-        header('Location: /techshop-ai-template/admin/dashboard.php');
+        header('Location: /admin/dashboard.php');
     } else {
-        header('Location: /techshop-ai-template/index.php');
+        header('Location: /index.php');
     }
     exit;
 }
@@ -24,8 +24,8 @@ if (isset($_SESSION['user'])) {
             </label>
             <button type="submit">Đăng nhập</button>
         </form>
-        <p>Bạn chưa có tài khoản? <a href="/techshop-ai-template/register.php">Đăng ký ngay</a>.</p>
+        <p>Bạn chưa có tài khoản? <a href="/register.php">Đăng ký ngay</a>.</p>
     </div>
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>
-<script src="/techshop-ai-template/assets/js/login.js" defer></script>
+<script src="assets/js/login.js" defer></script>

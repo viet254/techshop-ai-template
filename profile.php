@@ -3,7 +3,7 @@
 include __DIR__ . '/includes/header.php';
 // Kiểm tra đăng nhập; nếu chưa đăng nhập, chuyển tới trang đăng nhập
 if (!isset($_SESSION['user'])) {
-    header('Location: /techshop-ai-template/login.php');
+    header('Location: /login.php');
     exit;
 }
 ?>
@@ -14,10 +14,10 @@ if (!isset($_SESSION['user'])) {
         <aside class="profile-nav">
             <ul>
                 <li><a href="#" data-section="account" class="active">Tài khoản của tôi</a></li>
-                <li><a href="/techshop-ai-template/orders.php">Đơn mua</a></li>
+                <li><a href="/orders.php">Đơn mua</a></li>
                 <li><a href="#" data-section="vouchers">Kho voucher</a></li>
                 <li><a href="#" data-section="addresses">Sổ địa chỉ</a></li>
-                <li><a href="/techshop-ai-template/api/logout.php">Đăng xuất</a></li>
+                <li><a href="/api/logout.php">Đăng xuất</a></li>
             </ul>
         </aside>
         <!-- Khu vực nội dung -->
@@ -27,8 +27,9 @@ if (!isset($_SESSION['user'])) {
                 <h3>Thông tin cá nhân</h3>
                 <div class="avatar-upload">
                     <img id="avatar-preview" src="" alt="Avatar" />
-                    <input type="file" id="avatar-input" accept="image/*" />
-                    <button id="upload-avatar-btn">Tải ảnh</button>
+                    <!-- Nút chọn ảnh và tải lên. Input file ẩn sẽ được kích hoạt khi nhấn nút -->
+                    <input type="file" id="avatar-input" accept="image/*" style="display:none" />
+                    <button id="change-avatar-btn">Thay ảnh</button>
                 </div>
                 <form id="profile-form">
                     <label>Họ và tên:
@@ -65,18 +66,49 @@ if (!isset($_SESSION['user'])) {
             </section>
             <!-- Sổ địa chỉ -->
             <section id="addresses-section" class="profile-section hidden">
-                <h3>Sổ địa chỉ</h3>
-                <form id="address-form">
-                    <label>Tên người nhận:
+                <h3>Địa chỉ giao hàng của quý khách</h3>
+                <!-- Shipping address form styled to match provided design -->
+                <form id="address-form" class="shipping-form">
+                    <div class="form-group">
+                        <label>Khách hàng: *</label>
                         <input type="text" id="addr-recipient" required />
-                    </label>
-                    <label>Số điện thoại:
+                    </div>
+                    <div class="form-group">
+                        <label>Email: *</label>
+                        <input type="email" id="addr-email" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Số điện thoại:</label>
                         <input type="text" id="addr-phone" />
-                    </label>
-                    <label>Địa chỉ:
-                        <input type="text" id="addr-address" required />
-                    </label>
-                    <button type="submit">Thêm địa chỉ</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Tỉnh/Thành phố: *</label>
+                    <select id="addr-city" required>
+                        <option value="">--- Chọn tỉnh/thành ---</option>
+                        <option value="Ha Noi">Thành phố Hà Nội</option>
+                        <option value="Bac Ninh">Tỉnh Bắc Ninh</option>
+                        <option value="Hai Phong">Thành phố Hải Phòng</option>
+                        <option value="Quang Ninh">Tỉnh Quảng Ninh</option>
+                        <option value="Bac Giang">Tỉnh Bắc Giang</option>
+                        <option value="Thai Nguyen">Tỉnh Thái Nguyên</option>
+                        <option value="Vinh Phuc">Tỉnh Vĩnh Phúc</option>
+                        <option value="Nam Dinh">Tỉnh Nam Định</option>
+                        <option value="Ninh Binh">Tỉnh Ninh Bình</option>
+                        <option value="Ha Nam">Tỉnh Hà Nam</option>
+                        <option value="Hai Duong">Tỉnh Hải Dương</option>
+                    </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quận/Huyện:</label>
+                        <select id="addr-district">
+                            <option value="">--- Chọn quận/huyện ---</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Địa chỉ giao hàng:</label>
+                        <textarea id="addr-address" required placeholder="Địa chỉ giao hàng"></textarea>
+                    </div>
+                    <button type="submit" id="address-submit-btn">Thêm địa chỉ nhận</button>
                 </form>
                 <div id="address-list"></div>
             </section>
@@ -85,4 +117,4 @@ if (!isset($_SESSION['user'])) {
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <!-- Script riêng cho trang cá nhân -->
-<script src="/techshop-ai-template/assets/js/profile.js" defer></script>
+<script src="assets/js/profile.js" defer></script>

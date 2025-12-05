@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addMessage('user', message);
         input.value = '';
         try {
-            const res = await fetch('/techshop-ai-template/chatbot/chat_api.php', {
+            const res = await fetch('/chatbot/chat_api.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message })

@@ -39,7 +39,7 @@ if ($result) {
                     <td><?= $v['active'] ? 'Kích hoạt' : 'Tạm ngưng' ?></td>
                     <td><?= htmlspecialchars($v['expiration_date']) ?></td>
                     <td>
-                        <a href="delete_voucher.php?id=<?= $v['id'] ?>" onclick="return confirm('Bạn có chắc muốn xóa voucher này?');">Xóa</a>
+                        <a href="delete_voucher.php?id=<?= $v['id'] ?>" class="btn-delete" onclick="return confirm('Bạn có chắc muốn xóa voucher này?');"><span class="icon">🗑️</span> Xóa</a>
                     </td>
                 </tr>
                 <?php endforeach; ?>

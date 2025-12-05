@@ -2,7 +2,7 @@
 // Xử lý thêm voucher (admin)
 session_start();
 if (!isset($_SESSION['user']) || ($_SESSION['user']['role'] ?? 'user') !== 'admin') {
-    header('Location: /techshop-ai-template/login.php');
+    header('Location: /login.php');
     exit;
 }
 require_once __DIR__ . '/../database/connect.php';

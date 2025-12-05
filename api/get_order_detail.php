@@ -3,6 +3,14 @@
 header('Content-Type: application/json');
 session_start();
 require_once __DIR__ . '/../database/connect.php';
+// Nếu kết nối tới cơ sở dữ liệu gặp lỗi, trả về JSON thông báo lỗi thay vì để script dừng đột ngột
+if (isset($conn) && $conn->connect_error) {
+    echo json_encode([
+        'error' => 'Database connection failed',
+        'message' => $conn->connect_error
+    ]);
+    exit;
+}
 // Kiểm tra đăng nhập
 if (!isset($_SESSION['user'])) {
     echo json_encode(null);

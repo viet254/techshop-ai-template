@@ -26,7 +26,15 @@ include __DIR__ . '/../includes/admin_header.php';
                 <p id="stat-revenue">0₫</p>
             </div>
         </div>
+    <!-- Biểu đồ bán hàng và doanh thu -->
+    <div class="admin-card">
+        <h3>Bán hàng & Doanh thu</h3>
+        <canvas id="salesChart" style="max-width:100%;"></canvas>
+    </div>
     </div>
 </main>
 <?php include __DIR__ . '/../includes/footer.php'; ?>
-<script src="/techshop-ai-template/assets/js/admin_dashboard.js" defer></script>
+<!-- Thư viện Chart.js để vẽ biểu đồ doanh thu -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Script quản lý dashboard admin -->
+<script src="/assets/js/admin_dashboard.js" defer></script>
