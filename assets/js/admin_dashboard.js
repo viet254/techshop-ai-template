@@ -28,54 +28,55 @@ document.addEventListener('DOMContentLoaded', async () => {
             const monthData = await monthRes.json();
             if (monthData && monthData.success) {
                 const ctx = chartCanvas.getContext('2d');
-                const labels = monthData.months.map(m => String(m).padStart(2, '0') + '/' + monthData.year);
-                const orderCounts = monthData.orders;
-                const revenues = monthData.revenues;
-                // Vẽ biểu đồ với 2 datasets: số đơn và doanh thu (trục y kép)
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            {
-                                label: 'Đơn hàng',
-                                data: orderCounts,
-                                backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                                borderColor: 'rgba(255, 99, 132, 1)',
-                                borderWidth: 1,
-                                yAxisID: 'y-orders'
-                            },
-                            {
-                                label: 'Doanh thu (₫)',
-                                data: revenues,
-                                backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                                borderColor: 'rgba(54, 162, 235, 1)',
-                                borderWidth: 1,
-                                yAxisID: 'y-revenue'
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        interaction: { mode: 'index', intersect: false },
-                        stacked: false,
-                        scales: {
-                            'y-orders': {
-                                type: 'linear',
-                                position: 'left',
-                                beginAtZero: true,
-                                title: { display: true, text: 'Số đơn' }
-                            },
-                            'y-revenue': {
-                                type: 'linear',
-                                position: 'right',
-                                beginAtZero: true,
-                                title: { display: true, text: 'Doanh thu (₫)' },
-                                grid: { drawOnChartArea: false }
+                const labels = (monthData.months || []).map(m => String(m).padStart(2, '0') + '/' + monthData.year);
+                const orderCounts = monthData.orders || [];
+                const revenues = monthData.revenues || [];
+                if (labels.length) {
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: 'Đơn hàng',
+                                    data: orderCounts,
+                                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                                    borderColor: 'rgba(255, 99, 132, 1)',
+                                    borderWidth: 1,
+                                    yAxisID: 'yOrders'
+                                },
+                                {
+                                    label: 'Doanh thu (₫)',
+                                    data: revenues,
+                                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    borderWidth: 1,
+                                    yAxisID: 'yRevenue'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            interaction: { mode: 'index', intersect: false },
+                            stacked: false,
+                            scales: {
+                                yOrders: {
+                                    type: 'linear',
+                                    position: 'left',
+                                    beginAtZero: true,
+                                    title: { display: true, text: 'Số đơn' }
+                                },
+                                yRevenue: {
+                                    type: 'linear',
+                                    position: 'right',
+                                    beginAtZero: true,
+                                    title: { display: true, text: 'Doanh thu (₫)' },
+                                    grid: { drawOnChartArea: false }
+                                }
                             }
                         }
-                    }
-                });
+                    });
+                }
             }
         }
     } catch (err) {

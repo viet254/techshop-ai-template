@@ -6,15 +6,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputEl   = document.getElementById('chatbox-input');
     const sendBtn   = document.getElementById('chatbox-send');
     const resetBtn  = document.getElementById('chatbox-reset');
+    const newBtn    = document.getElementById('chatbox-new');
+    const messages  = document.getElementById('chatbox-messages');
+    const sessionList = document.getElementById('chatbox-session-list');
 
-    if (!panel || !toggleBtn || !closeBtn || !inputEl || !sendBtn) {
+    if (!panel || !toggleBtn || !closeBtn || !inputEl || !sendBtn || !messages || !sessionList) {
         console.warn('Chatbox elements not found');
         return;
     }
 
-    const STORAGE_KEY = 'techshop_ai_chat_history';
-    let chatHistory = [];
     let nextMessageStartsNewChat = false;
+    let currentSessionId = 0;
+    let sessions = [];
 
     // ====== MỞ / ĐÓNG KHUNG CHAT ======
     toggleBtn.addEventListener('click', () => {
@@ -29,9 +32,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // ====== NÚT CUỘC TRÒ CHUYỆN MỚI ======
     if (resetBtn) {
         resetBtn.addEventListener('click', () => {
-            clearChatHistory();
-            nextMessageStartsNewChat = true;
-            appendMessage('bot', 'Đã bắt đầu cuộc trò chuyện mới. Bạn muốn tư vấn sản phẩm nào?');
+            startNewChat();
+        });
+    }
+    if (newBtn) {
+        newBtn.addEventListener('click', () => {
+            startNewChat();
         });
     }
 
@@ -54,9 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
         inputEl.value = '';
 
         const body = { message: text };
-        if (nextMessageStartsNewChat) {
+        if (nextMessageStartsNewChat || currentSessionId === 0) {
             body.new_chat = true;
-            nextMessageStartsNewChat = false;
+        }
+        if (currentSessionId > 0) {
+            body.session_id = currentSessionId;
         }
 
         try {
@@ -88,6 +96,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 appendMessage('bot', data.reply || 'Có lỗi xảy ra khi xử lý yêu cầu.');
             } else {
                 appendMessage('bot', data.reply);
+                if (data.session_id) {
+                    currentSessionId = data.session_id;
+                }
+                nextMessageStartsNewChat = false;
+                // Sau khi nhận trả lời, refresh danh sách phiên để hiển thị lên đầu
+                loadSessions(false, currentSessionId);
             }
         } catch (err) {
             console.error(err);
@@ -95,9 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ====== HIỂN THỊ TIN NHẮN + LƯU LỊCH SỬ ======
-    function appendMessage(sender, text, save = true) {
-        const messages = document.getElementById('chatbox-messages');
+    // ====== HIỂN THỊ TIN NHẮN ======
+    function appendMessage(sender, text) {
         if (!messages) return;
 
         const wrapper = document.createElement('div');
@@ -125,38 +138,9 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.appendChild(bubble);
         messages.appendChild(wrapper);
         messages.scrollTop = messages.scrollHeight;
-
-        if (save) {
-            chatHistory.push({ sender, text });
-            saveHistory();
-        }
     }
 
-    function saveHistory() {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory));
-        } catch (e) {
-            console.warn('Cannot save chat history', e);
-        }
-    }
-
-    function loadHistory() {
-        try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (!raw) return;
-            const arr = JSON.parse(raw);
-            if (!Array.isArray(arr)) return;
-            chatHistory = arr;
-            chatHistory.forEach(msg => appendMessage(msg.sender, msg.text, false));
-        } catch (e) {
-            console.warn('Cannot load chat history', e);
-        }
-    }
-
-    function clearChatHistory() {
-        chatHistory = [];
-        localStorage.removeItem(STORAGE_KEY);
-        const messages = document.getElementById('chatbox-messages');
+    function clearMessagesUI() {
         if (messages) messages.innerHTML = '';
     }
 
@@ -204,6 +188,129 @@ document.addEventListener('DOMContentLoaded', () => {
         return html;
     }
 
-    // Tải lịch sử khi mở trang
-    loadHistory();
+    // ====== LẤY DANH SÁCH CUỘC TRÒ CHUYỆN ======
+    async function loadSessions(selectIfEmpty = true, keepActiveId = 0) {
+        try {
+            const res = await fetch('api/ai_support_history.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+            if (!res.ok) {
+                renderSessionError('Không thể tải lịch sử (HTTP ' + res.status + ')');
+                return;
+            }
+            const data = await res.json();
+            if (!data.success) {
+                renderSessionError(data.message || 'Không thể tải lịch sử');
+                return;
+            }
+            sessions = data.sessions || [];
+            renderSessions();
+
+            // Nếu chưa có phiên đang chọn thì chọn phiên mới nhất
+            if (selectIfEmpty && currentSessionId === 0 && sessions.length > 0) {
+                selectSession(sessions[0].id);
+            }
+
+            // Nếu có keepActiveId và list mới có id đó, giữ active
+            if (keepActiveId > 0 && sessions.some(s => s.id === keepActiveId)) {
+                setActiveSession(keepActiveId);
+            }
+        } catch (err) {
+            console.error(err);
+            renderSessionError('Không thể tải lịch sử');
+        }
+    }
+
+    function renderSessionError(text) {
+        sessionList.innerHTML = `<div class="chatbox-session-empty">${text}</div>`;
+    }
+
+    function renderSessions() {
+        if (!Array.isArray(sessions) || sessions.length === 0) {
+            renderSessionError('Chưa có lịch sử');
+            return;
+        }
+
+        sessionList.innerHTML = '';
+        sessions.forEach(sess => {
+            const item = document.createElement('div');
+            item.className = 'chatbox-session-item';
+            item.dataset.id = sess.id;
+            if (sess.id === currentSessionId) {
+                item.classList.add('active');
+            }
+            const title = document.createElement('div');
+            title.className = 'chatbox-session-title';
+            title.textContent = sess.title || `Cuộc trò chuyện #${sess.id}`;
+
+            const meta = document.createElement('div');
+            meta.className = 'chatbox-session-meta';
+            meta.textContent = formatDate(sess.updated_at || sess.created_at);
+
+            item.appendChild(title);
+            item.appendChild(meta);
+            item.addEventListener('click', () => selectSession(sess.id));
+            sessionList.appendChild(item);
+        });
+    }
+
+    function setActiveSession(id) {
+        currentSessionId = id;
+        document.querySelectorAll('.chatbox-session-item').forEach(el => {
+            if (Number(el.dataset.id) === id) {
+                el.classList.add('active');
+            } else {
+                el.classList.remove('active');
+            }
+        });
+    }
+
+    async function selectSession(id) {
+        currentSessionId = id;
+        setActiveSession(id);
+        clearMessagesUI();
+        try {
+            const res = await fetch('api/ai_support_history.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ session_id: id })
+            });
+            if (!res.ok) {
+                appendMessage('bot', 'Không thể tải lịch sử cuộc trò chuyện này (HTTP ' + res.status + ').');
+                return;
+            }
+            const data = await res.json();
+            if (!data.success) {
+                appendMessage('bot', data.message || 'Không thể tải lịch sử cuộc trò chuyện này.');
+                return;
+            }
+            const msgs = data.messages || [];
+            msgs.forEach(m => appendMessage(m.sender === 'bot' ? 'bot' : 'user', m.message));
+            nextMessageStartsNewChat = false;
+        } catch (err) {
+            console.error(err);
+            appendMessage('bot', 'Không thể tải lịch sử cuộc trò chuyện này.');
+        }
+    }
+
+    function startNewChat() {
+        clearMessagesUI();
+        appendMessage('bot', 'Đã bắt đầu cuộc trò chuyện mới. Bạn muốn tư vấn sản phẩm nào?');
+        nextMessageStartsNewChat = true;
+        currentSessionId = 0;
+        setActiveSession(-1);
+    }
+
+    function formatDate(str) {
+        if (!str) return '';
+        const d = new Date(str);
+        if (Number.isNaN(d.getTime())) return str;
+        return d.toLocaleString('vi-VN', { hour12: false });
+    }
+
+    // Tải danh sách cuộc trò chuyện khi mở trang
+    loadSessions(true);
 });

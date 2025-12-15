@@ -39,7 +39,7 @@ if (!isset($_SESSION['user'])) {
         <button id="checkout-btn">Tiến hành thanh toán</button>
     </div>
     <div class="saved-container">
-        <h3>Sản phẩm lưu để mua sau</h3>
+        <h3>Sản phẩm yêu thích</h3>
         <table class="cart-table" id="saved-table">
             <thead>
                 <tr>

@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function () {
     fetch('api/get_cart.php')
         .then(res => res.json())
         .then(data => {
-            const count = Object.keys(data.cart || {}).length;
+            const count = data.summary ? data.summary.line_count : Object.keys(data.cart || {}).length;
             const cartCount = document.getElementById('cart-count');
             const navCartCount = document.getElementById('nav-cart-count');
             const text = count > 0 ? '(' + count + ')' : '';

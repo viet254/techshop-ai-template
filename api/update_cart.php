@@ -2,52 +2,71 @@
 // Cập nhật số lượng sản phẩm trong giỏ
 header('Content-Type: application/json');
 session_start();
+require_once __DIR__ . '/../database/connect.php';
+require_once __DIR__ . '/../includes/cart_service.php';
 $data = json_decode(file_get_contents('php://input'), true);
 $id = isset($data['id']) ? (int)$data['id'] : 0;
 $qty = isset($data['quantity']) ? (int)$data['quantity'] : 1;
-if (!isset($_SESSION['cart'][$id])) {
+cart_ensure_session_bucket('cart');
+if ($id <= 0) {
+    echo json_encode(['success' => false, 'message' => 'Sản phẩm không hợp lệ']);
+    exit;
+}
+$userId = cart_get_user_id();
+$hasItem = $userId
+    ? cart_get_db_item_quantity($conn, $userId, $id) > 0
+    : isset($_SESSION['cart'][$id]);
+if (!$hasItem) {
     echo json_encode(['success' => false, 'message' => 'Sản phẩm không tồn tại trong giỏ hàng']);
     exit;
 }
 if ($qty <= 0) {
-    unset($_SESSION['cart'][$id]);
-    // Nếu đăng nhập, xóa khỏi bảng cart_items
-    if (isset($_SESSION['user'])) {
-        require_once __DIR__ . '/../database/connect.php';
-        $userId = (int)$_SESSION['user']['id'];
-        $delCart = $conn->prepare("DELETE FROM cart_items WHERE user_id = ? AND product_id = ?");
-        $delCart->bind_param('ii', $userId, $id);
-        $delCart->execute();
+    cart_remove_session_item($id);
+    if ($userId) {
+        cart_remove_db_item($conn, $userId, $id);
     }
-} else {
-    // Kiểm tra tồn kho
-    require_once __DIR__ . '/../database/connect.php';
-    $stmt = $conn->prepare("SELECT stock FROM products WHERE id = ?");
-    $stmt->bind_param('i', $id);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    $row = $res->fetch_assoc();
-    if ($row && $qty > $row['stock']) {
-        // Nếu số lượng vượt quá tồn kho, chuyển về số lượng tối đa và thông báo
-        $qty = (int)$row['stock'];
-        $_SESSION['cart'][$id]['quantity'] = $qty;
-        if (isset($_SESSION['user'])) {
-            $userId = (int)$_SESSION['user']['id'];
-            $updateCart = $conn->prepare("UPDATE cart_items SET quantity = ? WHERE user_id = ? AND product_id = ?");
-            $updateCart->bind_param('iii', $qty, $userId, $id);
-            $updateCart->execute();
+    $items = cart_fetch_items($conn);
+    echo json_encode([
+        'success' => true,
+        'cart' => cart_items_to_map($items),
+        'items' => $items,
+        'summary' => cart_calculate_summary($items)
+    ]);
+    exit;
+}
+$product = cart_fetch_product($conn, $id);
+if (!$product) {
+    echo json_encode(['success' => false, 'message' => 'Sản phẩm không tồn tại hoặc đã bị xóa']);
+    exit;
+}
+if ($qty > $product['stock']) {
+    $qty = $product['stock'];
+    if ($qty <= 0) {
+        cart_remove_session_item($id);
+        if ($userId) {
+            cart_remove_db_item($conn, $userId, $id);
         }
-        echo json_encode(['success' => true, 'adjusted' => true, 'message' => 'Vượt quá số lượng tồn kho, đã chuyển về số lượng tối đa', 'cart' => $_SESSION['cart']]);
+        echo json_encode([
+            'success' => false,
+            'removed' => true,
+            'message' => 'Sản phẩm đã hết hàng và bị xóa khỏi giỏ.'
+        ]);
         exit;
     }
-    $_SESSION['cart'][$id]['quantity'] = $qty;
-    // Nếu đăng nhập, cập nhật bảng cart_items
-    if (isset($_SESSION['user'])) {
-        $userId = (int)$_SESSION['user']['id'];
-        $updateCart = $conn->prepare("UPDATE cart_items SET quantity = ? WHERE user_id = ? AND product_id = ?");
-        $updateCart->bind_param('iii', $qty, $userId, $id);
-        $updateCart->execute();
-    }
+    $message = 'Vượt quá số lượng tồn kho, đã chuyển về số lượng tối đa (' . $qty . ').';
+} else {
+    $message = 'Đã cập nhật số lượng.';
 }
-echo json_encode(['success' => true, 'cart' => $_SESSION['cart']]);
+cart_set_session_item($product, $qty);
+if ($userId) {
+    cart_upsert_db_item($conn, $userId, $id, $qty);
+}
+$items = cart_fetch_items($conn);
+echo json_encode([
+    'success' => true,
+    'message' => $message,
+    'cart' => cart_items_to_map($items),
+    'items' => $items,
+    'summary' => cart_calculate_summary($items)
+]);
 ?>

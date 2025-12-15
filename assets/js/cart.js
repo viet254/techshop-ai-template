@@ -2,6 +2,9 @@
 // Biến toàn cục lưu phương thức thanh toán được chọn
 let selectedPaymentMethod = 'cod';
 
+const currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+let currentCartSubtotal = 0;
+
 document.addEventListener('DOMContentLoaded', async () => {
     loadCart();
     // Load addresses for selection (if user logged in)
@@ -14,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const checkoutBtn = document.getElementById('checkout-btn');
     if (checkoutBtn) {
         checkoutBtn.addEventListener('click', async () => {
-            // Lấy địa chỉ được chọn: ưu tiên radio; fallback select
+            // Kiểm tra địa chỉ trước khi thanh toán
             let addressId = 0;
             const radioAddr = document.querySelector('input[name="address-option"]:checked');
             if (radioAddr) {
@@ -23,8 +26,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const select = document.getElementById('select-address');
                 addressId = select ? parseInt(select.value) : 0;
             }
-            const voucherCode = appliedVoucherCode || '';
+            
+            // Nếu chưa có địa chỉ, chuyển đến trang profile để nhập địa chỉ
+            if (addressId <= 0) {
+                const confirmRedirect = confirm('Bạn chưa có địa chỉ giao hàng. Vui lòng thêm địa chỉ trước khi thanh toán.\n\nBạn có muốn chuyển đến trang cá nhân để thêm địa chỉ không?');
+                if (confirmRedirect) {
+                    window.location.href = '/profile.php';
+                }
+                return;
+            }
+            
+            // Kiểm tra phương thức thanh toán - không cho phép thanh toán qua ngân hàng
             const paymentMethod = selectedPaymentMethod || 'cod';
+            if (paymentMethod === 'bank') {
+                showNotification('Đang bảo trì cổng thanh toán. Vui lòng chọn phương thức thanh toán khác.', 'error');
+                // Tự động chuyển về COD
+                selectedPaymentMethod = 'cod';
+                const codRadio = document.querySelector('input[name="payment-method"][value="cod"]');
+                if (codRadio) {
+                    codRadio.checked = true;
+                }
+                return;
+            }
+            
+            const voucherCode = appliedVoucherCode || '';
             try {
                 const res = await fetch('/api/checkout.php', {
                     method: 'POST',
@@ -57,51 +82,81 @@ async function loadCart() {
     try {
         const res = await fetch('/api/get_cart.php');
         const data = await res.json();
-        const cartItems = data.cart || {};
-        const savedItems = data.saved || {};
+        const cartItems = data.items || [];
+        const savedItems = data.saved || [];
         const cartTable = document.getElementById('cart-items');
         const savedTable = document.getElementById('saved-items');
-        let total = 0;
         cartTable.innerHTML = '';
         savedTable.innerHTML = '';
-        // Render cart items
-        Object.values(cartItems).forEach(item => {
-            const row = document.createElement('tr');
-            const subtotal = item.price * item.quantity;
-            total += subtotal;
-            row.innerHTML = `
-                <td>${item.name}</td>
-                <td>${Number(item.price).toLocaleString()}₫</td>
-                <td><input type="number" min="1" value="${item.quantity}" data-id="${item.product_id}" onchange="updateQuantity(this)" /></td>
-                <td>${Number(subtotal).toLocaleString()}₫</td>
-                <td>
-                    <button onclick="saveForLater(${item.product_id})">Lưu</button>
-                    <button onclick="removeItem(${item.product_id}, false)">Xóa</button>
-                </td>
-            `;
-            cartTable.appendChild(row);
-        });
-        // Render saved items
-        Object.values(savedItems).forEach(item => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${item.name}</td>
-                <td>${Number(item.price).toLocaleString()}₫</td>
-                <td>${item.quantity}</td>
-                <td>
-                    <button onclick="moveToCart(${item.product_id})">Mua ngay</button>
-                    <button onclick="removeItem(${item.product_id}, true)">Xóa</button>
-                </td>
-            `;
-            savedTable.appendChild(row);
-        });
-        document.getElementById('cart-total').textContent = Number(total).toLocaleString() + '₫';
-        // Sau khi tính tổng, cập nhật tổng cuối cùng nếu có voucher
-        updateTotals(total);
-        // Update cart count in header
-        const count = Object.keys(cartItems).length;
+        if (cartItems.length === 0) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = `<td colspan="5" style="text-align:center;">Giỏ hàng của bạn đang trống.</td>`;
+            cartTable.appendChild(emptyRow);
+        } else {
+            cartItems.forEach(item => {
+                const row = document.createElement('tr');
+                const priceHtml = buildPriceHtml(item);
+                const warningHtml = buildStockWarning(item);
+                row.innerHTML = `
+                    <td>
+                        <div class="cart-item-info">
+                            ${item.image ? `<img src="assets/images/${item.image}" alt="${item.name}" />` : ''}
+                            <div>
+                                <strong>${item.name}</strong>
+                                ${warningHtml}
+                            </div>
+                        </div>
+                    </td>
+                    <td>${priceHtml}</td>
+                    <td>
+                        <div class="qty-control">
+                            <input type="number" min="1" ${item.max_quantity ? `max="${item.max_quantity}"` : ''} value="${item.quantity}" data-id="${item.product_id}" onchange="updateQuantity(this)" />
+                        </div>
+                    </td>
+                    <td>${formatCurrency(item.line_total)}</td>
+                    <td>
+                        <button onclick="saveForLater(${item.product_id})">Yêu thích</button>
+                        <button onclick="removeItem(${item.product_id}, false)">Xóa</button>
+                    </td>
+                `;
+                cartTable.appendChild(row);
+            });
+        }
+        if (savedItems.length === 0) {
+            const emptySaved = document.createElement('tr');
+            emptySaved.innerHTML = `<td colspan="4" style="text-align:center;">Chưa có sản phẩm yêu thích nào.</td>`;
+            savedTable.appendChild(emptySaved);
+        } else {
+            savedItems.forEach(item => {
+                const row = document.createElement('tr');
+                const priceHtml = buildPriceHtml(item, true);
+                row.innerHTML = `
+                    <td>
+                        <div class="cart-item-info">
+                            ${item.image ? `<img src="assets/images/${item.image}" alt="${item.name}" />` : ''}
+                            <div><strong>${item.name}</strong></div>
+                        </div>
+                    </td>
+                    <td>${priceHtml}</td>
+                    <td>${item.quantity}</td>
+                    <td>
+                        <button onclick="moveToCart(${item.product_id})">Mua ngay</button>
+                        <button onclick="removeItem(${item.product_id}, true)">Xóa</button>
+                    </td>
+                `;
+                savedTable.appendChild(row);
+            });
+        }
+        currentCartSubtotal = data.summary ? Number(data.summary.subtotal) || 0 : 0;
+        document.getElementById('cart-total').textContent = formatCurrency(currentCartSubtotal);
+        updateTotals(currentCartSubtotal);
+        // Update cart count in header + nav
+        const lineCount = data.summary ? data.summary.line_count : cartItems.length;
+        const text = lineCount > 0 ? `(${lineCount})` : '';
         const cartCount = document.getElementById('cart-count');
-        if (cartCount) cartCount.textContent = count > 0 ? `(${count})` : '';
+        const navCartCount = document.getElementById('nav-cart-count');
+        if (cartCount) cartCount.textContent = text;
+        if (navCartCount) navCartCount.textContent = text;
     } catch (err) {
         console.error(err);
     }
@@ -117,8 +172,8 @@ async function updateQuantity(input) {
             body: JSON.stringify({ id, quantity })
         });
         const data = await res.json();
-        if ((data && data.message) || data.adjusted) {
-            showNotification(data.message || 'Đã cập nhật số lượng.', 'success');
+        if (data && data.message) {
+            showNotification(data.message, data.success ? 'success' : 'error');
         }
         loadCart();
     } catch (err) {
@@ -178,7 +233,7 @@ async function loadAddressOptions() {
         const res = await fetch('/api/get_addresses.php');
         const addresses = await res.json();
         if (!Array.isArray(addresses) || addresses.length === 0) {
-            container.innerHTML = '<p>Không có địa chỉ giao hàng. Vui lòng thêm trong Trang cá nhân.</p>';
+            container.innerHTML = '<p style="color: #e53935; font-weight: 500;">⚠️ Bạn chưa có địa chỉ giao hàng. <a href="/profile.php" style="color: #1a73e8; text-decoration: underline;">Vui lòng thêm địa chỉ tại đây</a> trước khi thanh toán.</p>';
             return;
         }
         // Tạo tiêu đề
@@ -314,24 +369,56 @@ function initPaymentMethod() {
     // Các tùy chọn
     const options = [
         { value: 'cod', label: 'Thanh toán khi nhận hàng' },
-        { value: 'bank', label: 'Thanh toán qua ngân hàng' }
+        { value: 'bank', label: 'Thanh toán qua ngân hàng', disabled: true, notice: 'Đang bảo trì' }
     ];
     const optionsDiv = document.createElement('div');
     optionsDiv.className = 'payment-options';
     options.forEach(opt => {
         const labelEl = document.createElement('label');
         labelEl.className = 'payment-option';
+        if (opt.disabled) {
+            labelEl.style.opacity = '0.5';
+            labelEl.style.cursor = 'not-allowed';
+            labelEl.style.position = 'relative';
+        }
         const radio = document.createElement('input');
         radio.type = 'radio';
         radio.name = 'payment-method';
         radio.value = opt.value;
-        // Check default
-        if (opt.value === selectedPaymentMethod) radio.checked = true;
+        if (opt.disabled) {
+            radio.disabled = true;
+        }
+        // Check default - chỉ chọn COD nếu bank bị disabled
+        if (opt.value === 'cod' && selectedPaymentMethod !== 'bank') {
+            radio.checked = true;
+            selectedPaymentMethod = 'cod';
+        } else if (opt.value === selectedPaymentMethod && !opt.disabled) {
+            radio.checked = true;
+        }
         radio.addEventListener('change', () => {
-            selectedPaymentMethod = opt.value;
+            if (opt.value === 'bank') {
+                // Hiện thông báo khi chọn bank
+                showNotification('Đang bảo trì cổng thanh toán. Vui lòng chọn phương thức thanh toán khác.', 'error');
+                // Tự động chuyển về COD
+                selectedPaymentMethod = 'cod';
+                const codRadio = document.querySelector('input[name="payment-method"][value="cod"]');
+                if (codRadio) {
+                    codRadio.checked = true;
+                }
+            } else {
+                selectedPaymentMethod = opt.value;
+            }
         });
         const span = document.createElement('span');
         span.textContent = opt.label;
+        if (opt.notice) {
+            const notice = document.createElement('span');
+            notice.textContent = ' (' + opt.notice + ')';
+            notice.style.color = '#e53935';
+            notice.style.fontSize = '12px';
+            notice.style.fontWeight = '600';
+            span.appendChild(notice);
+        }
         labelEl.appendChild(radio);
         labelEl.appendChild(span);
         optionsDiv.appendChild(labelEl);
@@ -340,15 +427,11 @@ function initPaymentMethod() {
 }
 
 // Cập nhật tổng tiền và hiển thị discount/finalTotal
-function updateTotals(currentTotal) {
-    // Nếu currentTotal truyền vào, đặt total hiện tại; nếu không, lấy từ #cart-total
-    let total;
-    if (typeof currentTotal === 'number' && !isNaN(currentTotal)) {
-        total = currentTotal;
-    } else {
-        const text = document.getElementById('cart-total').textContent.replace(/₫|,/g, '');
-        total = parseFloat(text);
+function updateTotals(subtotalOverride) {
+    if (typeof subtotalOverride === 'number' && !isNaN(subtotalOverride)) {
+        currentCartSubtotal = subtotalOverride;
     }
+    let total = currentCartSubtotal;
     let final = total;
     if (appliedVoucherCode) {
         // Gọi API check_voucher để lấy type/value
@@ -367,9 +450,9 @@ function updateTotals(currentTotal) {
                 }
                 if (discountAmount > total) discountAmount = total;
                 final = total - discountAmount;
-                document.getElementById('final-total').textContent = Number(final).toLocaleString() + '₫';
+                document.getElementById('final-total').textContent = formatCurrency(final);
                 document.getElementById('final-total-area').style.display = 'block';
-                document.getElementById('discount-info').textContent = 'Đã giảm: ' + Number(discountAmount).toLocaleString() + '₫';
+                document.getElementById('discount-info').textContent = 'Đã giảm: ' + formatCurrency(discountAmount);
             }
         }).catch(err => {
             console.error(err);
@@ -378,4 +461,38 @@ function updateTotals(currentTotal) {
         document.getElementById('final-total-area').style.display = 'none';
         document.getElementById('discount-info').textContent = '';
     }
+}
+
+function buildPriceHtml(item, skipSavingText = false) {
+    const price = Number(item.price || item.original_price || 0);
+    const sale = item.sale_price !== null && item.sale_price !== undefined ? Number(item.sale_price) : null;
+    const effective = Number(item.effective_price || item.price || item.original_price || 0);
+    if (sale !== null && sale < price) {
+        const saving = skipSavingText ? '' : `<p class="saving-text">Tiết kiệm ${formatCurrency(price - sale)}</p>`;
+        return `
+            <div class="price-stack">
+                <span class="sale-price">${formatCurrency(sale)}</span>
+                <span class="original-price">${formatCurrency(price)}</span>
+                ${saving}
+            </div>
+        `;
+    }
+    return `<span class="sale-price">${formatCurrency(effective)}</span>`;
+}
+
+function buildStockWarning(item) {
+    if (item.is_out_of_stock) {
+        return `<p class="stock-warning">Hết hàng - vui lòng xóa sản phẩm khỏi giỏ</p>`;
+    }
+    if (item.needs_adjustment) {
+        return `<p class="stock-warning">Chỉ còn ${item.stock} sản phẩm</p>`;
+    }
+    if (item.unit_saving > 0) {
+        return `<p class="saving-pill">Tiết kiệm ${formatCurrency(item.unit_saving)} mỗi sản phẩm</p>`;
+    }
+    return '';
+}
+
+function formatCurrency(value) {
+    return currencyFormatter.format(Number(value || 0));
 }

@@ -7,25 +7,42 @@ if ($orderId <= 0) {
     // Invalid order; show message and stop rendering further content
     echo '<p>Đơn hàng không hợp lệ.</p>';
     // Close the main tag opened in admin_header
-    echo '</main>';
-    include __DIR__ . '/../includes/footer.php';
+    include __DIR__ . '/../includes/admin_footer.php';
     exit;
 }
 ?>
-    <!-- Nội dung trang chi tiết đơn hàng cho admin -->
-    <h2>Chi tiết đơn hàng #<?php echo htmlspecialchars($orderId); ?></h2>
-    <div class="admin-card">
-        <div id="order-info"></div>
-        <table class="admin-table" id="order-items-table">
-            <thead>
-                <tr><th>Sản phẩm</th><th>Giá</th><th>Số lượng</th><th>Tổng</th></tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-        <p id="order-total"></p>
+<div class="app-page-title admin-page-title">
+    <div class="page-title-wrapper">
+        <div class="page-title-heading">
+            <div class="page-title-icon">
+                <i class="pe-7s-news-paper text-primary"></i>
+            </div>
+            <div>
+                Chi tiết đơn hàng #<?php echo htmlspecialchars($orderId); ?>
+                <div class="page-title-subheading">Thông tin khách, địa chỉ và sản phẩm trong đơn.</div>
+            </div>
+        </div>
+        <div class="page-title-actions">
+            <a class="btn btn-outline-secondary btn-shadow" href="/admin/manage_orders.php">Quay lại quản lý đơn</a>
+        </div>
     </div>
-</main>
-<?php include __DIR__ . '/../includes/footer.php'; ?>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div id="order-info" class="mb-3"></div>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover admin-table" id="order-items-table">
+                <thead>
+                    <tr><th>Sản phẩm</th><th>Giá</th><th>Số lượng</th><th>Tổng</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <p id="order-total" class="mt-3 font-weight-bold"></p>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
     const orderId = <?php echo $orderId; ?>;
@@ -96,3 +113,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 </script>
+<?php include __DIR__ . '/../includes/admin_footer.php'; ?>

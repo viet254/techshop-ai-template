@@ -13,41 +13,73 @@ if ($catRes) {
     }
 }
 ?>
-    <!-- Nội dung trang thêm sản phẩm -->
-    <h2>Thêm sản phẩm</h2>
-    <div class="admin-card">
+<div class="app-page-title admin-page-title">
+    <div class="page-title-wrapper">
+        <div class="page-title-heading">
+            <div class="page-title-icon">
+                <i class="pe-7s-plus text-primary"></i>
+            </div>
+            <div>
+                Thêm sản phẩm mới
+                <div class="page-title-subheading">Nhập thông tin sản phẩm và tải ảnh đại diện.</div>
+            </div>
+        </div>
+        <div class="page-title-actions">
+            <a class="btn btn-outline-secondary btn-shadow" href="/admin/manage_products.php">Quay lại danh sách</a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
         <form class="admin-form" action="create_product.php" method="post" enctype="multipart/form-data">
-            <label>Tên sản phẩm:
-                <input type="text" name="name" required />
+            <div class="form-row">
+                <div class="col-md-6">
+                    <label>Tên sản phẩm
+                        <input type="text" name="name" required />
+                    </label>
+                </div>
+                <div class="col-md-3">
+                    <label>Giá (VND)
+                        <input type="number" name="price" step="0.01" required />
+                    </label>
+                </div>
+                <div class="col-md-3">
+                    <label>Giá khuyến mãi (VND)
+                        <input type="number" name="sale_price" step="0.01" />
+                    </label>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="col-md-6">
+                    <label>Danh mục
+                        <select name="category" required>
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?= htmlspecialchars($cat) ?>"><?= htmlspecialchars($cat); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </label>
+                </div>
+                <div class="col-md-3">
+                    <label>Tồn kho
+                        <input type="number" name="stock" value="0" />
+                    </label>
+                </div>
+                <div class="col-md-3">
+                    <label>Ảnh sản phẩm
+                        <input type="file" name="image_file" accept="image/*" />
+                    </label>
+                </div>
+            </div>
+            <label>Thông số kỹ thuật
+                <textarea name="specs" rows="4"></textarea>
             </label>
-            <label>Giá (VND):
-                <input type="number" name="price" step="0.01" required />
+            <label>Mô tả
+                <textarea name="description" rows="4"></textarea>
             </label>
-            <label>Giá khuyến mãi (VND):
-                <input type="number" name="sale_price" step="0.01" />
-            </label>
-            <label>Danh mục:
-                <select name="category" required>
-                    <?php foreach ($categories as $cat): ?>
-                        <option value="<?= htmlspecialchars($cat) ?>"><?php echo htmlspecialchars($cat); ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </label>
-            <label>Tồn kho:
-                <input type="number" name="stock" value="0" />
-            </label>
-            <label>Ảnh sản phẩm:
-                <input type="file" name="image_file" accept="image/*" />
-            </label>
-            <label>Thông số kỹ thuật:
-                <!-- Trường thông số kỹ thuật cho phép nhập nhiều dòng -->
-                <textarea name="specs"></textarea>
-            </label>
-            <label>Mô tả:
-                <textarea name="description"></textarea>
-            </label>
-            <button type="submit">Thêm</button>
+            <button type="submit">Thêm sản phẩm</button>
         </form>
     </div>
-</main>
-<?php include __DIR__ . '/../includes/footer.php'; ?>
+</div>
+
+<?php include __DIR__ . '/../includes/admin_footer.php'; ?>

@@ -8,8 +8,48 @@ if (!isset($_SESSION['user'])) {
 }
 ?>
 <main class="main-content profile-page">
-    <h2>Trang cá nhân</h2>
-    <div class="profile-container">
+    <section class="profile-hero">
+        <div class="hero-main">
+            <div class="hero-avatar">
+                <img id="avatar-preview" src="" alt="Avatar" />
+                <input type="file" id="avatar-input" accept="image/*" style="display:none" />
+                <button id="change-avatar-btn">Thay ảnh</button>
+            </div>
+            <div class="hero-info">
+                <p class="eyebrow">Xin chào,</p>
+                <h2 id="profile-name-display">Trang cá nhân</h2>
+                <p class="muted" id="profile-email-display"></p>
+                <div class="hero-tags">
+                    <span class="tag" id="profile-phone-display">Chưa cập nhật số điện thoại</span>
+                    <span class="tag subtle">Thành viên</span>
+                </div>
+                <div class="hero-actions">
+                    <a class="ghost-btn" href="/orders.php">Đơn mua</a>
+                    <a class="ghost-btn profile-shortcut" href="#" data-section="vouchers">Kho voucher</a>
+                    <a class="ghost-btn profile-shortcut" href="#" data-section="addresses">Sổ địa chỉ</a>
+                </div>
+            </div>
+        </div>
+        <div class="hero-stats">
+            <div class="stat-card">
+                <p>Đơn mua</p>
+                <strong id="stat-order-count">--</strong>
+                <small>Đang theo dõi</small>
+            </div>
+            <div class="stat-card">
+                <p>Voucher</p>
+                <strong id="stat-voucher-count">--</strong>
+                <small>Voucher khả dụng</small>
+            </div>
+            <div class="stat-card">
+                <p>Địa chỉ</p>
+                <strong id="stat-address-count">--</strong>
+                <small>Sổ địa chỉ đã lưu</small>
+            </div>
+        </div>
+    </section>
+
+    <div class="profile-container profile-layout">
         <!-- Thanh điều hướng bên trái cho trang cá nhân -->
         <aside class="profile-nav">
             <ul>
@@ -23,51 +63,75 @@ if (!isset($_SESSION['user'])) {
         <!-- Khu vực nội dung -->
         <section class="profile-content">
             <!-- Thông tin tài khoản -->
-            <section id="account-section" class="profile-section">
-                <h3>Thông tin cá nhân</h3>
-                <div class="avatar-upload">
-                    <img id="avatar-preview" src="" alt="Avatar" />
-                    <!-- Nút chọn ảnh và tải lên. Input file ẩn sẽ được kích hoạt khi nhấn nút -->
-                    <input type="file" id="avatar-input" accept="image/*" style="display:none" />
-                    <button id="change-avatar-btn">Thay ảnh</button>
+            <section id="account-section" class="profile-section profile-card">
+                <div class="section-head">
+                    <div>
+                        <p class="eyebrow">Tài khoản</p>
+                        <h3>Thông tin cá nhân</h3>
+                    </div>
+                    <span class="status-pill success">Hoạt động</span>
                 </div>
-                <form id="profile-form">
-                    <label>Họ và tên:
+                <form id="profile-form" class="form-grid">
+                    <label class="field">
+                        <span>Họ và tên</span>
                         <input type="text" id="profile-name" name="name" />
                     </label>
-                    <label>Email:
+                    <label class="field">
+                        <span>Email</span>
                         <input type="email" id="profile-email" name="email" />
                     </label>
-                    <label>Điện thoại:
+                    <label class="field">
+                        <span>Điện thoại</span>
                         <input type="text" id="profile-phone" name="phone" />
                     </label>
-                    <button type="submit">Cập nhật</button>
+                    <div class="form-actions">
+                        <button type="submit">Cập nhật thông tin</button>
+                    </div>
                 </form>
-                <div class="change-password">
-                    <h3>Đổi mật khẩu</h3>
-                    <form id="password-form">
-                        <label>Mật khẩu cũ:
-                            <input type="password" id="old-password" />
-                        </label>
-                        <label>Mật khẩu mới:
-                            <input type="password" id="new-password" />
-                        </label>
-                        <label>Xác nhận mật khẩu mới:
-                            <input type="password" id="confirm-password" />
-                        </label>
-                        <button type="submit">Đổi mật khẩu</button>
-                    </form>
+            </section>
+            <section class="profile-section profile-card">
+                <div class="section-head">
+                    <div>
+                        <p class="eyebrow">Bảo mật</p>
+                        <h3>Đổi mật khẩu</h3>
+                    </div>
                 </div>
+                <form id="password-form" class="form-grid three-cols">
+                    <label class="field">
+                        <span>Mật khẩu cũ</span>
+                        <input type="password" id="old-password" />
+                    </label>
+                    <label class="field">
+                        <span>Mật khẩu mới</span>
+                        <input type="password" id="new-password" />
+                    </label>
+                    <label class="field">
+                        <span>Xác nhận mật khẩu mới</span>
+                        <input type="password" id="confirm-password" />
+                    </label>
+                    <div class="form-actions">
+                        <button type="submit">Đổi mật khẩu</button>
+                    </div>
+                </form>
             </section>
             <!-- Kho voucher -->
-            <section id="vouchers-section" class="profile-section hidden">
-                <h3>Kho voucher</h3>
+            <section id="vouchers-section" class="profile-section profile-card hidden">
+                <div class="section-head">
+                    <div>
+                        <p class="eyebrow">Ưu đãi</p>
+                        <h3>Kho voucher</h3>
+                    </div>
+                </div>
                 <div id="voucher-list">Đang tải...</div>
             </section>
             <!-- Sổ địa chỉ -->
-            <section id="addresses-section" class="profile-section hidden">
-                <h3>Địa chỉ giao hàng của quý khách</h3>
-                <!-- Shipping address form styled to match provided design -->
+            <section id="addresses-section" class="profile-section profile-card hidden">
+                <div class="section-head">
+                    <div>
+                        <p class="eyebrow">Giao hàng</p>
+                        <h3>Sổ địa chỉ</h3>
+                    </div>
+                </div>
                 <form id="address-form" class="shipping-form">
                     <div class="form-group">
                         <label>Khách hàng: *</label>
@@ -110,7 +174,7 @@ if (!isset($_SESSION['user'])) {
                     </div>
                     <button type="submit" id="address-submit-btn">Thêm địa chỉ nhận</button>
                 </form>
-                <div id="address-list"></div>
+                <div id="address-list" class="address-list"></div>
             </section>
         </section>
     </div>

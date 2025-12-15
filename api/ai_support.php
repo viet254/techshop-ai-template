@@ -18,14 +18,367 @@ $input = json_decode($raw, true) ?: [];
 $query   = isset($input['message']) ? trim($input['message']) : '';
 $newChat = !empty($input['new_chat']);
 
+// Lưu thông tin user và session hiện tại (nếu có)
+$currentUserId = isset($_SESSION['user']['id']) ? (int)$_SESSION['user']['id'] : 0;
+$sessionId     = isset($input['session_id']) ? (int)$input['session_id'] : 0;
+
+/**
+ * Lưu 1 tin nhắn vào bảng ai_chat_messages
+ */
+function ai_save_message(int $sessionId, int $userId, string $sender, string $message): void
+{
+    if ($sessionId <= 0 || $message === '') {
+        return;
+    }
+    global $conn;
+    $stmt = $conn->prepare(
+        "INSERT INTO ai_chat_messages (session_id, user_id, sender, message, created_at)
+         VALUES (?, ?, ?, ?, NOW())"
+    );
+    if ($stmt) {
+        $stmt->bind_param('iiss', $sessionId, $userId, $sender, $message);
+        $stmt->execute();
+        $stmt->close();
+    }
+}
+
+/**
+ * Gửi JSON response và đồng thời lưu lịch sử chat (user + bot) nếu có session
+ */
+function ai_respond_and_log(
+    bool $success,
+    string $reply,
+    int $sessionId,
+    int $currentUserId,
+    string $userMessage
+): void {
+    // Lưu tin nhắn của user
+    if ($userMessage !== '') {
+        ai_save_message($sessionId, $currentUserId, 'user', $userMessage);
+    }
+    // Lưu tin nhắn của bot
+    if ($reply !== '') {
+        ai_save_message($sessionId, $currentUserId, 'bot', $reply);
+    }
+
+    echo json_encode(
+        [
+            'success'    => $success,
+            'reply'      => $reply,
+            'session_id' => $sessionId,
+        ],
+        JSON_UNESCAPED_UNICODE
+    );
+    exit;
+}
+
+// Khi bắt đầu cuộc trò chuyện mới hoặc chưa có session_id -> tạo bản ghi mới trong ai_chat_sessions
+if ($query !== '') {
+    if ($newChat || $sessionId <= 0) {
+        if ($currentUserId > 0) {
+            $title = mb_substr($query, 0, 80, 'UTF-8');
+            $stmtSession = $conn->prepare(
+                "INSERT INTO ai_chat_sessions (user_id, title, created_at, updated_at)
+                 VALUES (?, ?, NOW(), NOW())"
+            );
+            if ($stmtSession) {
+                $stmtSession->bind_param('is', $currentUserId, $title);
+                if ($stmtSession->execute()) {
+                    $sessionId = $stmtSession->insert_id;
+                }
+                $stmtSession->close();
+            }
+        }
+    } elseif ($sessionId > 0 && $currentUserId > 0) {
+        // Cập nhật thời gian hoạt động của cuộc trò chuyện hiện tại
+        $stmtUpdate = $conn->prepare(
+            "UPDATE ai_chat_sessions SET updated_at = NOW() WHERE id = ? AND user_id = ?"
+        );
+        if ($stmtUpdate) {
+            $stmtUpdate->bind_param('ii', $sessionId, $currentUserId);
+            $stmtUpdate->execute();
+            $stmtUpdate->close();
+        }
+    }
+}
+
 if ($newChat) {
-    // Xóa ngữ cảnh trước đó khi bắt đầu cuộc trò chuyện mới
+    // Xóa ngữ cảnh trước đó khi bắt đầu cuộc hội thoại mới
     unset($_SESSION['ai_last_products'], $_SESSION['ai_last_question']);
 }
 
 if ($query === '') {
-    echo json_encode(['success' => false, 'reply' => '']);
-    exit;
+    ai_respond_and_log(false, '', $sessionId, $currentUserId, $query);
+}
+
+/* ============================================================
+   Xử lý sớm các câu hỏi mang tính thao tác hoặc chăm sóc khách hàng
+   ============================================================ */
+
+// Chuẩn hóa về chữ thường để so khớp dễ dàng
+$normalizedQuery = mb_strtolower($query, 'UTF-8');
+
+/**
+ * Lấy ID của sản phẩm đầu tiên từ ngữ cảnh AI lưu trong session.
+ * @return int|null
+ */
+function get_first_recommended_product_id(): ?int
+{
+    if (empty($_SESSION['ai_last_products'])) {
+        return null;
+    }
+    $info = $_SESSION['ai_last_products'];
+    if (preg_match('/product_detail\.php\?id=(\d+)/', $info, $m)) {
+        return (int)$m[1];
+    }
+    return null;
+}
+
+/**
+ * Thêm một sản phẩm vào giỏ hàng trong phiên hiện tại. Hàm này sao chép logic
+ * từ api/add_to_cart.php để cập nhật $_SESSION['cart'] và cơ sở dữ liệu khi cần.
+ * @param int $productId ID sản phẩm
+ * @param int $qty Số lượng cần thêm (mặc định 1)
+ * @return string Thông điệp kết quả
+ */
+function ai_add_to_cart(int $productId, int $qty = 1): string
+{
+    global $conn;
+    if ($productId <= 0) {
+        return 'Không có sản phẩm phù hợp để thêm vào giỏ hàng.';
+    }
+    // Lấy thông tin sản phẩm
+    $stmt = $conn->prepare("SELECT id, name, price, stock FROM products WHERE id = ? LIMIT 1");
+    $stmt->bind_param('i', $productId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $product = $result->fetch_assoc();
+    $stmt->close();
+    if (!$product) {
+        return 'Sản phẩm không tồn tại.';
+    }
+    // Khởi tạo giỏ hàng nếu chưa có
+    if (!isset($_SESSION['cart']) || !is_array($_SESSION['cart'])) {
+        $_SESSION['cart'] = [];
+    }
+    // Kiểm tra tồn kho
+    $existingQty = isset($_SESSION['cart'][$productId]) ? $_SESSION['cart'][$productId]['quantity'] : 0;
+    if ($product['stock'] < $qty + $existingQty) {
+        return 'Số lượng sản phẩm vượt quá tồn kho hiện có.';
+    }
+    // Cập nhật vào session
+    if (isset($_SESSION['cart'][$productId])) {
+        $_SESSION['cart'][$productId]['quantity'] += $qty;
+    } else {
+        $_SESSION['cart'][$productId] = [
+            'product_id' => (int)$product['id'],
+            'name'       => $product['name'],
+            'price'      => (float)$product['price'],
+            'quantity'   => $qty
+        ];
+    }
+    // Nếu người dùng đã đăng nhập thì cập nhật bảng cart_items
+    if (isset($_SESSION['user'])) {
+        $userId = (int)$_SESSION['user']['id'];
+        // Kiểm tra xem sản phẩm đã có trong cart_items hay chưa
+        $stmtCart = $conn->prepare("SELECT id, quantity FROM cart_items WHERE user_id = ? AND product_id = ?");
+        $stmtCart->bind_param('ii', $userId, $productId);
+        $stmtCart->execute();
+        $resCart = $stmtCart->get_result();
+        if ($row = $resCart->fetch_assoc()) {
+            $newQty = $row['quantity'] + $qty;
+            $updateCart = $conn->prepare("UPDATE cart_items SET quantity = ? WHERE id = ?");
+            $updateCart->bind_param('ii', $newQty, $row['id']);
+            $updateCart->execute();
+        } else {
+            $insertCart = $conn->prepare("INSERT INTO cart_items (user_id, product_id, quantity) VALUES (?, ?, ?)");
+            $insertCart->bind_param('iii', $userId, $productId, $qty);
+            $insertCart->execute();
+        }
+        $stmtCart->close();
+    }
+    return 'Đã thêm sản phẩm "' . $product['name'] . '" vào giỏ hàng thành công.';
+}
+
+/**
+ * Cố gắng xác định ID sản phẩm từ câu hỏi người dùng khi họ yêu cầu thêm vào giỏ hàng.
+ * Hàm này sẽ ưu tiên tìm kiếm theo tên sản phẩm đầy đủ nằm trong câu, kế tiếp là theo
+ * các từ khóa thương hiệu/phân khúc phổ biến. Nếu có nhiều kết quả, sẽ lấy kết quả
+ * có tên dài nhất để giảm thiểu nhầm lẫn. Nếu không tìm được theo câu hỏi, hàm
+ * trả về null để caller sử dụng fallback từ ngữ cảnh trước đó.
+ *
+ * @param string $normalizedQuery Câu hỏi đã được chuyển về chữ thường, bỏ dấu câu
+ * @return int|null ID sản phẩm khớp, hoặc null nếu không tìm thấy
+ */
+function get_recommended_product_id_from_query(string $normalizedQuery): ?int
+{
+    global $conn;
+    // Sanitize câu hỏi: chỉ giữ lại chữ cái, số và khoảng trắng để so khớp tên sản phẩm
+    $sanQuery = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $normalizedQuery);
+    // Gom các khoảng trắng liên tiếp và cắt đầu/cuối
+    $sanQuery = preg_replace('/\s+/u', ' ', $sanQuery);
+    $sanQuery = trim($sanQuery);
+    if ($sanQuery === '') {
+        return null;
+    }
+
+    // 0) Thử tìm trực tiếp một sản phẩm có tên đầy đủ nằm trong câu hỏi
+    // Lặp qua toàn bộ bảng sản phẩm để tránh bỏ sót. Dataset của shop thường không quá lớn
+    $bestId = null;
+    $bestMatchLength = 0;
+    $res = $conn->query("SELECT id, name FROM products");
+    if ($res) {
+        while ($row = $res->fetch_assoc()) {
+            $name = mb_strtolower($row['name'], 'UTF-8');
+            // Loại bỏ ký tự đặc biệt trong tên sản phẩm
+            $sanName = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $name);
+            $sanName = preg_replace('/\s+/u', ' ', $sanName);
+            $sanName = trim($sanName);
+            if ($sanName === '') {
+                continue;
+            }
+            // Nếu câu hỏi chứa toàn bộ tên sản phẩm thì chọn (bỏ qua khoảng trắng để khớp "16gb" và "16 gb")
+            $compactQuery = preg_replace('/\s+/u', '', $sanQuery);
+            $compactName  = preg_replace('/\s+/u', '', $sanName);
+            if (strpos($compactQuery, $compactName) !== false) {
+                $len = mb_strlen($sanName, 'UTF-8');
+                if ($len > $bestMatchLength) {
+                    $bestMatchLength = $len;
+                    $bestId = (int)$row['id'];
+                }
+            }
+        }
+        $res->free();
+    }
+    if ($bestId) {
+        return $bestId;
+    }
+
+    // 1) Nếu không tìm được tên đầy đủ, thử tìm theo các từ khóa ngắn (brand/model)
+    // Danh sách gợi ý brand/model. Sắp xếp theo độ dài giảm dần để ưu tiên khớp dài hơn
+    $dbHints = [
+        'macbook', 'thinkpad', 'vivobook', 'ideapad', 'inspiron', 'pavilion', 'nitro', 'swift',
+        'gigabyte', 'lenovo', 'dell', 'asus', 'rog', 'hp', 'acer', 'msi', 'xps', 'g5', 'x1', 'mac',
+        // Thêm các hãng và dòng linh kiện phổ biến
+        'kingston', 'corsair', 'gskill', 'crucial', 'samsung', 'seagate', 'adata', 'pny', 'ssd', 'ram'
+    ];
+    foreach ($dbHints as $needle) {
+        // Tìm từ khóa trong câu hỏi
+        if (mb_stripos($sanQuery, $needle, 0, 'UTF-8') !== false) {
+            $like = '%' . $needle . '%';
+            // Truy vấn tìm sản phẩm chứa từ khóa trong tên, sắp xếp theo độ dài tên giảm dần và giá giảm dần
+            $stmt = $conn->prepare(
+                "SELECT id, name FROM products WHERE LOWER(name) LIKE ? ORDER BY LENGTH(name) DESC, COALESCE(sale_price, price) DESC LIMIT 1"
+            );
+            if ($stmt) {
+                $stmt->bind_param('s', $like);
+                if ($stmt->execute()) {
+                    $r = $stmt->get_result();
+                    if ($r && $row = $r->fetch_assoc()) {
+                        $stmt->close();
+                        return (int)$row['id'];
+                    }
+                }
+                $stmt->close();
+            }
+        }
+    }
+
+    // 2) Nếu câu hỏi nhắc tới "sản phẩm thứ n", thử lấy theo danh sách đã tư vấn ở session
+    if (preg_match('/th(?:ứ|u)\s*(\d+)/u', $sanQuery, $mm)) {
+        $idx = max(1, (int)$mm[1]) - 1;
+        if (!empty($_SESSION['ai_last_products'])) {
+            // Tách danh sách sản phẩm đã gợi ý (markdown) thành mảng các link theo thứ tự
+            if (preg_match_all('/product_detail\.php\?id=(\d+)/', $_SESSION['ai_last_products'], $mids)) {
+                if (isset($mids[1][$idx])) {
+                    return (int)$mids[1][$idx];
+                }
+            }
+        }
+    }
+    return null;
+}
+
+// Các câu hỏi chăm sóc khách hàng cơ bản và trả lời cố định
+// Các câu hỏi chăm sóc khách hàng cơ bản và trả lời cố định
+// Mở rộng thêm nhiều biến thể để khách dễ hỏi theo cách khác nhau
+$supportResponses = [
+    // Chính sách bảo hành
+    'bảo hành'       => 'Tất cả sản phẩm tại TechShop đều có chế độ bảo hành chính hãng. Thời gian bảo hành tùy thuộc từng danh mục, thường từ 12–24 tháng. Bạn vui lòng kiểm tra thông tin bảo hành cụ thể trên trang chi tiết sản phẩm hoặc liên hệ hotline để được hỗ trợ.',
+    'bảo trì'        => 'Tất cả sản phẩm tại TechShop đều có chế độ bảo hành chính hãng. Thời gian bảo hành tùy thuộc từng danh mục, thường từ 12–24 tháng. Bạn vui lòng kiểm tra thông tin bảo hành cụ thể trên trang chi tiết sản phẩm hoặc liên hệ hotline để được hỗ trợ.',
+    // Chính sách đổi trả và hủy đơn
+    'đổi trả'        => 'Chính sách đổi trả: trong vòng 7 ngày kể từ khi nhận hàng, sản phẩm chưa qua sử dụng và còn nguyên tem mác sẽ được hỗ trợ đổi sang mẫu khác hoặc hoàn tiền. Vui lòng giữ hóa đơn và liên hệ hotline trước khi gửi sản phẩm.',
+    'hủy đơn'        => 'Để hủy đơn hàng, bạn vui lòng liên hệ hotline 1900‑1234 hoặc gửi email tới support@techshop.vn kèm mã đơn hàng. Nhân viên sẽ hỗ trợ kiểm tra và hủy đơn trong thời gian sớm nhất.',
+    // Giao hàng và vận chuyển
+    'giao hàng'      => 'TechShop hỗ trợ giao hàng toàn quốc. Thời gian giao hàng dự kiến 1–3 ngày tại nội thành và 3–7 ngày với tỉnh thành khác. Đơn hàng trên 1 triệu đồng được miễn phí vận chuyển.',
+    'vận chuyển'     => 'TechShop hỗ trợ giao hàng toàn quốc. Thời gian giao hàng dự kiến 1–3 ngày tại nội thành và 3–7 ngày với tỉnh thành khác. Đơn hàng trên 1 triệu đồng được miễn phí vận chuyển.',
+    'phí ship'       => 'Đơn hàng trên 1 triệu đồng được miễn phí vận chuyển. Với đơn hàng dưới mức này, phí ship sẽ được hiển thị tại bước thanh toán và phụ thuộc vào địa chỉ giao hàng.',
+    // Thanh toán và trả góp
+    'thanh toán'     => 'Bạn có thể thanh toán bằng tiền mặt khi nhận hàng (COD), chuyển khoản ngân hàng hoặc qua ví điện tử. Hệ thống sẽ hiển thị tùy chọn khi bạn tiến hành đặt hàng.',
+    'trả góp'        => 'TechShop hỗ trợ mua hàng trả góp qua thẻ tín dụng của nhiều ngân hàng. Bạn vui lòng chọn hình thức trả góp tại bước thanh toán hoặc liên hệ hotline để biết thêm chi tiết.',
+    // Liên hệ và hỗ trợ
+    'liên hệ'        => 'Bạn có thể liên hệ chúng tôi qua số điện thoại 1900‑1234, email support@techshop.vn hoặc fanpage TechShop để được hỗ trợ nhanh nhất.',
+    'địa chỉ'        => 'TechShop có trụ sở tại 123 Đường Cách Mạng Tháng Tám, Quận 3, TP. HCM và chi nhánh tại 456 Phố Huế, Hà Nội. Bạn có thể ghé thăm để trải nghiệm sản phẩm trực tiếp.',
+    'giờ mở cửa'      => 'Cửa hàng TechShop mở cửa từ 9h sáng đến 9h tối tất cả các ngày trong tuần.',
+];
+
+// Kiểm tra nếu người dùng yêu cầu thêm sản phẩm vào giỏ
+if (preg_match('/(?:thêm|them|mua)\s+(?:.*)?(?:vào giỏ|vao gio|giỏ hàng|gio hang|mua ngay)/u', $normalizedQuery)) {
+
+    // Cố gắng trích xuất cụm tên sản phẩm mà người dùng muốn thêm
+    $explicitName = '';
+    if (preg_match('/(?:thêm|them|mua)\s+(.*?)\s*(?:vào giỏ|vao gio|giỏ hàng|gio hang|mua ngay)/u', $normalizedQuery, $mmName)) {
+        $explicitName = trim($mmName[1]);
+    }
+
+    // Các cách gọi chung chung cho sản phẩm vừa được gợi ý
+    $genericRefs = [
+        'sản phẩm này', 'san pham nay', 'sản phẩm đó', 'san pham do', 'sản phẩm kia', 'san pham kia',
+        'laptop này', 'laptop đó', 'laptop kia',
+        'máy này', 'may nay', 'máy đó', 'may do', 'máy kia', 'may kia',
+        'sp này', 'sp đó', 'sp kia'
+    ];
+
+    $isGenericRef = false;
+    if ($explicitName !== '') {
+        foreach ($genericRefs as $gr) {
+            if ($explicitName === $gr) {
+                $isGenericRef = true;
+                break;
+            }
+        }
+    }
+
+    // 1) Ưu tiên xác định đúng sản phẩm theo nội dung câu hỏi
+    $pid = get_recommended_product_id_from_query($normalizedQuery);
+
+    // 2) Nếu người dùng gọi đích danh một sản phẩm nhưng không tìm thấy trong DB
+    //    thì KHÔNG fallback sang sản phẩm đầu danh sách để tránh thêm sai.
+    if (!$pid && $explicitName !== '' && !$isGenericRef) {
+        $message = 'Không tìm thấy đúng sản phẩm bạn muốn thêm vào giỏ. Bạn có thể kiểm tra lại tên sản phẩm hoặc để mình gợi ý mẫu phù hợp nhé.';
+        ai_respond_and_log(true, $message, $sessionId, $currentUserId, $query);
+    }
+
+    // 3) Nếu không tìm được sản phẩm cụ thể và người dùng chỉ nói chung chung
+    //    thì fallback lấy sản phẩm đầu trong ngữ cảnh AI
+    if (!$pid) {
+        $pid = get_first_recommended_product_id();
+    }
+
+    if ($pid !== null) {
+        $message = ai_add_to_cart((int)$pid, 1);
+    } else {
+        $message = 'Hiện không có sản phẩm được đề xuất để thêm vào giỏ hàng.';
+    }
+
+    ai_respond_and_log(true, $message, $sessionId, $currentUserId, $query);
+}
+
+// Kiểm tra các câu hỏi chăm sóc khách hàng và trả về câu trả lời cố định
+foreach ($supportResponses as $keyword => $responseText) {
+    if (mb_stripos($normalizedQuery, $keyword, 0, 'UTF-8') !== false) {
+        ai_respond_and_log(true, $responseText, $sessionId, $currentUserId, $query);
+    }
 }
 
 /**
@@ -102,10 +455,13 @@ $stopWords = [
     // Stop words cho context để tránh lặp lại keyword
     'sinh', 'viên', 'sinh viên', 'hoc', 'sinh', 'học sinh',
     'văn', 'phòng', 'van', 'phong', 'office', 'nhân', 'viên', 'nhan', 'vien'
+    , 'dưới', 'duoi', 'trên', 'tren'
+    , 'sản', 'san', 'phẩm', 'pham'
+    , 'tư', 'tu', 'vấn', 'van', 'giá', 'gia', 'giá cả', 'gia ca', 'triệu', 'trieu', 'tr'
 ];
 
 // Danh sách hãng cần nhận diện
-$brandNames = ['msi', 'dell', 'acer', 'asus', 'lenovo', 'hp', 'gigabyte', 'apple', 'macbook'];
+$brandNames = ['msi', 'dell', 'acer', 'asus', 'lenovo', 'hp', 'gigabyte', 'apple', 'macbook', 'kingston', 'gskill', 'corsair', 'crucial', 'samsung', 'seagate', 'adata', 'pny'];
 
 // Danh sách từ khóa chỉ ra linh kiện, để không tự thêm 'laptop'
 $componentWords = [
@@ -204,6 +560,15 @@ foreach ($componentWords as $cw) {
 
 // Auto-thêm 'laptop' khi thuộc ngữ cảnh laptop và không nhắc tới linh kiện
 if ($hasContextLaptop && !$hasComponent && !in_array('laptop', $keywords, true)) {
+    $keywords[] = 'laptop';
+}
+
+// Auto-thêm 'laptop' theo ngân sách cao nếu người dùng chỉ hỏi mức giá chung
+$hasPriceIntent = ($priceFilterType !== '' && $priceFilterValue !== null);
+$mentionsAccessories = (mb_stripos($normalized, 'phụ kiện', 0, 'UTF-8') !== false) ||
+                      (mb_stripos($normalized, 'phu kien', 0, 'UTF-8') !== false) ||
+                      (mb_stripos($normalized, 'accessory', 0, 'UTF-8') !== false);
+if ($hasPriceIntent && $priceFilterValue >= 10000000 && !$hasComponent && !$mentionsAccessories && !in_array('laptop', $keywords, true)) {
     $keywords[] = 'laptop';
 }
 
@@ -350,6 +715,8 @@ if ($info !== '') {
     $prompt .= "  ✨ **Tên máy** - GIÁ\n";
     $prompt .= "     • Điểm mạnh chính (hiệu năng / nhiệt độ / độ bền / màn hình...).\n";
     $prompt .= "- Nếu thiếu thông tin chính xác (ví dụ không rõ loại SSD) thì chỉ nói chung chung, không bịa số liệu cụ thể.\n";
+    // Bổ sung hướng dẫn để mô hình tham khảo kiến thức bên ngoài cơ sở dữ liệu của shop khi cần
+    $prompt .= "- Nếu khách hỏi về thông tin không có trong mô tả (chẳng hạn thời lượng pin, trọng lượng, bảo hành...), hãy trả lời dựa trên hiểu biết chung và kiến thức trực tuyến của bạn.\n";
 } else {
     $prompt  = "Bạn là trợ lý tư vấn sản phẩm cho website TechShop.\n";
     $prompt .= "Hiện tại không lấy được dữ liệu sản phẩm từ cơ sở dữ liệu.\n";
@@ -365,12 +732,10 @@ if ($info !== '') {
 $apiKey = '' ?: '';
 
 if (!$apiKey) {
-    echo json_encode(['success' => false, 'reply' => 'Chưa cấu hình khóa API Gemini.']);
-    exit;
+    ai_respond_and_log(false, 'Chưa cấu hình khóa API Gemini.', $sessionId, $currentUserId, $query);
 }
 if (!function_exists('curl_init')) {
-    echo json_encode(['success' => false, 'reply' => 'Máy chủ không hỗ trợ cURL.']);
-    exit;
+    ai_respond_and_log(false, 'Máy chủ không hỗ trợ cURL.', $sessionId, $currentUserId, $query);
 }
 
 // Chọn model; dùng phiên bản mới nhất để tránh 404
@@ -409,8 +774,7 @@ file_put_contents(__DIR__ . '/ai_support_log.txt',
 
 // Kiểm tra response
 if ($response === false) {
-    echo json_encode(['success' => false, 'reply' => 'Không kết nối được tới Gemini.']);
-    exit;
+    ai_respond_and_log(false, 'Không kết nối được tới Gemini.', $sessionId, $currentUserId, $query);
 }
 
 $data = json_decode($response, true);
@@ -418,23 +782,16 @@ $data = json_decode($response, true);
 // Nếu API trả lỗi
 if ($httpCode !== 200) {
     $errMsg = $data['error']['message'] ?? 'Không rõ nguyên nhân';
-    echo json_encode([
-        'success' => false,
-        'reply'   => "Lỗi từ Gemini (HTTP $httpCode): $errMsg"
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
+    $msg = "Lỗi từ Gemini (HTTP $httpCode): $errMsg";
+    ai_respond_and_log(false, $msg, $sessionId, $currentUserId, $query);
 }
 
 // Lấy nội dung trả lời
 if (!isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-    echo json_encode([
-        'success' => false,
-        'reply'   => 'Dữ liệu trả về từ Gemini không đúng định dạng.'
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
+    ai_respond_and_log(false, 'Dữ liệu trả về từ Gemini không đúng định dạng.', $sessionId, $currentUserId, $query);
 }
 
 $reply = trim($data['candidates'][0]['content']['parts'][0]['text']);
 
-// Trả về cho frontend
-echo json_encode(['success' => true, 'reply' => $reply], JSON_UNESCAPED_UNICODE);
+// Trả về cho frontend và đồng thời lưu lịch sử chat
+ai_respond_and_log(true, $reply, $sessionId, $currentUserId, $query);

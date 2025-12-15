@@ -7,10 +7,8 @@ require_once __DIR__ . '/../database/connect.php';
 // Lấy ID người dùng từ query string
 $userId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($userId <= 0) {
-    echo '<h2>Thông tin người dùng</h2>';
-    echo '<p>Người dùng không hợp lệ.</p>';
-    echo '</main>';
-    include __DIR__ . '/../includes/footer.php';
+    echo '<div class="alert alert-warning">Người dùng không hợp lệ.</div>';
+    include __DIR__ . '/../includes/admin_footer.php';
     exit;
 }
 
@@ -21,30 +19,49 @@ $stmt->execute();
 $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 
-echo '<h2>Thông tin người dùng #' . htmlspecialchars($userId) . '</h2>';
-echo '<div class="admin-card">';
-if (!$user) {
-    echo '<p>Không tìm thấy người dùng.</p>';
-} else {
-    // Xác định đường dẫn avatar. Nếu không có, dùng avatar mặc định
-    $avatarFile = $user['avatar'] ?? '';
-    $avatarPath = '/assets/images/default-avatar.png';
-    if ($avatarFile) {
-        $avatarPath = '/assets/images/avatars/' . $avatarFile;
-    }
-    echo '<div style="display:flex; gap:20px; align-items:flex-start;">';
-    echo '<img src="' . htmlspecialchars($avatarPath) . '" alt="Avatar" style="width:120px; height:120px; object-fit:cover; border-radius:8px;">';
-    echo '<div>';
-    echo '<p><strong>ID:</strong> ' . $user['id'] . '</p>';
-    echo '<p><strong>Tên đăng nhập:</strong> ' . htmlspecialchars($user['username']) . '</p>';
-    echo '<p><strong>Email:</strong> ' . htmlspecialchars($user['email']) . '</p>';
-    echo '<p><strong>Điện thoại:</strong> ' . htmlspecialchars($user['phone'] ?? '') . '</p>';
-    echo '<p><strong>Quyền:</strong> ' . htmlspecialchars($user['role']) . '</p>';
-    echo '<p><strong>Ngày tạo:</strong> ' . htmlspecialchars($user['created_at']) . '</p>';
-    echo '</div>';
-    echo '</div>';
-}
-echo '</div>';
-echo '</main>';
-include __DIR__ . '/../includes/footer.php';
 ?>
+<div class="app-page-title admin-page-title">
+    <div class="page-title-wrapper">
+        <div class="page-title-heading">
+            <div class="page-title-icon">
+                <i class="pe-7s-id text-primary"></i>
+            </div>
+            <div>
+                Thông tin người dùng #<?= htmlspecialchars($userId) ?>
+                <div class="page-title-subheading">Chi tiết liên hệ và quyền hạn.</div>
+            </div>
+        </div>
+        <div class="page-title-actions">
+            <a class="btn btn-outline-secondary btn-shadow" href="/admin/manage_users.php">Quay lại danh sách</a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <?php if (!$user): ?>
+            <p class="mb-0">Không tìm thấy người dùng.</p>
+        <?php else: ?>
+            <?php
+                $avatarFile = $user['avatar'] ?? '';
+                $avatarPath = '/assets/images/default-avatar.png';
+                if ($avatarFile) {
+                    $avatarPath = '/assets/images/avatars/' . $avatarFile;
+                }
+            ?>
+            <div class="d-flex align-items-start gap-3">
+                <img src="<?= htmlspecialchars($avatarPath) ?>" alt="Avatar" style="width:120px; height:120px; object-fit:cover; border-radius:8px;">
+                <div>
+                    <p class="mb-1"><strong>ID:</strong> <?= $user['id'] ?></p>
+                    <p class="mb-1"><strong>Tên đăng nhập:</strong> <?= htmlspecialchars($user['username']) ?></p>
+                    <p class="mb-1"><strong>Email:</strong> <?= htmlspecialchars($user['email']) ?></p>
+                    <p class="mb-1"><strong>Điện thoại:</strong> <?= htmlspecialchars($user['phone'] ?? '') ?></p>
+                    <p class="mb-1"><strong>Quyền:</strong> <?= htmlspecialchars($user['role']) ?></p>
+                    <p class="mb-1"><strong>Ngày tạo:</strong> <?= htmlspecialchars($user['created_at']) ?></p>
+                </div>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<?php include __DIR__ . '/../includes/admin_footer.php'; ?>

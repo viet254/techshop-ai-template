@@ -866,7 +866,7 @@ RESP: {
 }
 
 
-2025-12-05 05:18:41 HTTP:200
+2025-12-06 12:46:09 HTTP:200
 CURL_ERR: 
 RESP: {
   "candidates": [
@@ -874,7 +874,7 @@ RESP: {
       "content": {
         "parts": [
           {
-            "text": "Chào bạn!\n\nRất tiếc hiện tại TechShop chưa có sản phẩm nào với mức giá trên 30 triệu đồng trong danh sách này ạ. Các sản phẩm của shop chủ yếu là phụ kiện, thiết bị lưu trữ như thẻ nhớ, USB, ổ cứng di động và balo laptop, với mức giá thấp hơn nhiều.\n\nBạn có muốn tham khảo các sản phẩm trong tầm giá khác hoặc một loại sản phẩm cụ thể nào không ạ? Mình có thể hỗ trợ bạn tìm những sản phẩm phù hợp hơn nhé!"
+            "text": "Chào bạn! Với mức ngân sách trên 21 triệu đồng, TechShop có khá nhiều lựa chọn laptop chất lượng cao, từ gaming mạnh mẽ đến ultrabook mỏng nhẹ, pin trâu. Dưới đây là một vài gợi ý nổi bật mà bạn có thể tham khảo nhé:\n\n✨ **[Laptop ASUS ROG Strix G15](product_detail.php?id=30)** - 34.990.000 VND\n   •   Đây là lựa chọn hàng đầu cho game thủ và người làm đồ họa nặng với CPU Ryzen 7 6800H và GPU RTX 3060, đi kèm 16GB RAM và 1TB SSD. Máy có tản nhiệt rất tốt, đảm bảo hiệu năng ổn định.\n\n✨ **[Laptop Dell XPS 13](product_detail.php?id=4)** - 33.000.000 VND\n   •   Laptop cao cấp, siêu mỏng nhẹ và cực kỳ sang trọng. Với màn hình 13 inch và CPU Intel Core i7, 16GB RAM, máy phù hợp cho công việc văn phòng, học tập và giải trí đòi hỏi sự tinh tế và di động cao.\n\n✨ **[Laptop LG Gram 16 siêu nhẹ](product_detail.php?id=71)** - 30.990.000 VND\n   •   Điểm mạnh nhất của chiếc laptop này là trọng lượng siêu nhẹ chỉ khoảng 1.2kg và thời lượng pin cực \"trâu\" lên đến 19 giờ. Màn hình 16 inch WQXGA chất lượng cao, rất lý tưởng cho những ai hay di chuyển, cần màn hình lớn và pin bền bỉ.\n\n✨ **[MacBook Air M1 13-inch](product_detail.php?id=31)** - 28.000.000 VND\n   •   Mỏng nhẹ, thiết kế sang trọng đặc trưng của Apple. Chip Apple M1 mang lại hiệu năng mạnh mẽ vượt trội cho các tác vụ hàng ngày, làm việc văn phòng, sáng tạo nhẹ nhàng và giải trí, cùng thời lượng pin rất ấn tượng.\n\n✨ **[Laptop Dell G15 5525 RTX 3050Ti](product_detail.php?id=63)** - 23.990.000 VND\n   •   Một lựa chọn gaming mạnh mẽ khác với CPU AMD Ryzen 7 6800H và GPU RTX 3050Ti, 16GB RAM DDR5 và màn hình 15.6\" FHD 120Hz. Phù hợp cho game thủ và người dùng cần làm đồ họa cơ bản.\n\n✨ **[Laptop Apple MacBook Air M1 13](product_detail.php?id=69)** - 23.990.000 VND\n   •   Tương tự như chiếc MacBook Air M1 ở trên, đây là một lựa chọn tuyệt vời với thiết kế mỏng nhẹ, chip M1 hiệu năng cao, pin \"trâu\" lên đến 15 giờ. Rất phù hợp cho công việc, học tập và giải trí di động.\n\n✨ **[Laptop ASUS TUF Gaming F15](product_detail.php?id=66)** - 21.990.000 VND\n   •   Nếu bạn ưu tiên độ bền và hiệu năng gaming tốt trong tầm giá này, chiếc ASUS TUF Gaming F15 với CPU Intel Core i7-12700H và RTX 3060, màn hình 144Hz sẽ là một lựa chọn đáng cân nhắc. Máy đạt tiêu chuẩn độ bền quân đội.\n\nBạn quan tâm đến loại laptop nào hơn, gaming cấu hình mạnh hay laptop mỏng nhẹ, pin \"trâu\" để di chuyển nhiều? Hãy cho mình biết thêm nhu cầu sử dụng cụ thể của bạn để mình có thể tư vấn chi tiết hơn nhé!"
           }
         ],
         "role": "model"
@@ -884,23 +884,23 @@ RESP: {
     }
   ],
   "usageMetadata": {
-    "promptTokenCount": 1002,
-    "candidatesTokenCount": 107,
-    "totalTokenCount": 1833,
+    "promptTokenCount": 1306,
+    "candidatesTokenCount": 852,
+    "totalTokenCount": 5251,
     "promptTokensDetails": [
       {
         "modality": "TEXT",
-        "tokenCount": 1002
+        "tokenCount": 1306
       }
     ],
-    "thoughtsTokenCount": 724
+    "thoughtsTokenCount": 3093
   },
   "modelVersion": "gemini-2.5-flash",
-  "responseId": "gbEyaej9DLSrkdUP67mQOQ"
+  "responseId": "4Ws0acyjMebjkdUPj7WTgAQ"
 }
 
 
-2025-12-05 05:21:17 HTTP:200
+2025-12-06 12:46:51 HTTP:200
 CURL_ERR: 
 RESP: {
   "candidates": [
@@ -908,7 +908,7 @@ RESP: {
       "content": {
         "parts": [
           {
-            "text": "Chào bạn,\n\nRất tiếc hiện tại TechShop chưa có sản phẩm nào trên 30 triệu VND ạ. Các sản phẩm hiện có trong shop chủ yếu là phụ kiện lưu trữ và balo, với mức giá thấp hơn nhiều so với con số bạn mong muốn.\n\nBạn có muốn mình giới thiệu các sản phẩm phụ kiện trong tầm giá dưới 2 triệu đồng không? Hoặc bạn có nhu cầu tìm sản phẩm nào cụ thể với mức ngân sách khác không? Mình rất sẵn lòng hỗ trợ!"
+            "text": "Chào bạn! Đối với học sinh, sinh viên, mình hiểu là các bạn thường cần một chiếc laptop cân bằng giữa hiệu năng, giá cả, và đôi khi là cả tính di động nữa. Dựa trên danh sách sản phẩm, mình xin gợi ý một vài mẫu laptop rất phù hợp với nhiều nhu cầu khác nhau của các bạn nhé:\n\n**1. Cho nhu cầu học tập cơ bản, văn phòng, giá phải chăng:**\n\n✨ **[Laptop HP 15s Intel Core i5](product_detail.php?id=68)** - 12.990.000 VND\n   • Điểm mạnh chính: Giá rất tốt, cấu hình Core i5 đời 12 mới mẻ, RAM 8GB, SSD 512GB đủ dùng cho mọi tác vụ học tập, làm việc văn phòng online. Màn hình lớn 15.6 inch cho không gian làm việc thoải mái.\n\n**2. Cho nhu cầu học tập, giải trí, làm nội dung cơ bản với màn hình đẹp:**\n\n✨ **[Laptop ASUS VivoBook 14 OLED](product_detail.php?id=70)** - 17.990.000 VND\n   • Điểm mạnh chính: Nổi bật với màn hình OLED rực rỡ, độ tương phản cao, rất lý tưởng để xem phim, chỉnh sửa ảnh nhẹ hoặc thiết kế đồ họa cơ bản. Cấu hình Core i5-1240P với RAM 16GB mạnh mẽ, đa nhiệm tốt. Thiết kế cũng khá mỏng nhẹ và có bảo mật vân tay tiện lợi.\n\n**3. Cho nhu cầu chơi game, học kỹ thuật, đồ họa (kỹ thuật, IT...):**\n\n✨ **[Laptop Gigabyte G5 Gaming](product_detail.php?id=72)** - 19.990.000 VND\n   • Điểm mạnh chính: Đây là lựa chọn cực kỳ hấp dẫn với card đồ họa rời RTX 3060 mạnh mẽ trong tầm giá dưới 20 triệu, đủ sức cân tốt các game nặng, các phần mềm đồ họa, dựng phim hoặc lập trình yêu cầu hiệu năng cao. Màn hình 144Hz cũng giúp trải nghiệm chơi game mượt mà hơn rất nhiều.\n\n**4. Cho nhu cầu di động cao, pin trâu, hiệu năng ổn định, hệ điều hành macOS:**\n\n✨ **[Laptop Apple MacBook Air M1 13](product_detail.php?id=69)** - 23.990.000 VND\n   • Điểm mạnh chính: Cực kỳ mỏng nhẹ (chỉ 1.29kg), thời lượng pin lên đến 15 giờ, rất tiện lợi khi mang đi học cả ngày mà không cần sạc. Chip Apple M1 mang lại hiệu năng vượt trội cho các tác vụ học tập, văn phòng, đồ họa 2D cơ bản và chỉnh sửa video nhẹ, cùng với trải nghiệm macOS mượt mà, ổn định.\n\nBạn thấy có mẫu nào ưng ý không? Hoặc bạn muốn ưu tiên tiêu chí nào (giá, hiệu năng, di động, màn hình...) để mình gợi ý thêm nhé!"
           }
         ],
         "role": "model"
@@ -918,23 +918,23 @@ RESP: {
     }
   ],
   "usageMetadata": {
-    "promptTokenCount": 1002,
-    "candidatesTokenCount": 104,
-    "totalTokenCount": 1751,
+    "promptTokenCount": 2984,
+    "candidatesTokenCount": 684,
+    "totalTokenCount": 5281,
     "promptTokensDetails": [
       {
         "modality": "TEXT",
-        "tokenCount": 1002
+        "tokenCount": 2984
       }
     ],
-    "thoughtsTokenCount": 645
+    "thoughtsTokenCount": 1613
   },
   "modelVersion": "gemini-2.5-flash",
-  "responseId": "HbIyacHGC5LxnsEP6sSW-A8"
+  "responseId": "C2w0aZaNHemFkdUPndSKgAQ"
 }
 
 
-2025-12-05 05:21:31 HTTP:200
+2025-12-07 19:20:12 HTTP:200
 CURL_ERR: 
 RESP: {
   "candidates": [
@@ -942,7 +942,7 @@ RESP: {
       "content": {
         "parts": [
           {
-            "text": "Chào bạn,\n\nHiện tại, TechShop chưa có sản phẩm nào với mức giá trên 30 triệu đồng ạ. Các sản phẩm hiện có của shop chủ yếu là phụ kiện và thiết bị lưu trữ, với mức giá thấp hơn nhiều.\n\nBạn có muốn mình tư vấn các sản phẩm khác trong tầm giá phù hợp với ngân sách của mình không ạ? Hoặc bạn đang tìm kiếm loại sản phẩm nào cụ thể? Mình sẽ rất vui được hỗ trợ!"
+            "text": "Chào bạn! Mình xin lỗi vì lần trước đã gợi ý những mẫu laptop chưa đúng tầm giá bạn mong muốn. Với ngân sách khoảng 15 triệu đồng, TechShop có một số lựa chọn rất đáng cân nhắc, cân bằng giữa hiệu năng và mức giá.\n\nDưới đây là 2 mẫu laptop nổi bật trong tầm giá 15-16 triệu đồng, phù hợp cho nhiều nhu cầu:\n\n✨ **[Laptop Acer Aspire 7 A715](product_detail.php?id=65)** - 15.490.000 VND\n   •   **Điểm mạnh chính**: Đây là lựa chọn cực kỳ hợp lý với mức giá sát 15 triệu nhất. Máy được trang bị chip AMD Ryzen 5 5500U mạnh mẽ cùng card đồ họa rời NVIDIA GTX 1650 4GB, đủ sức đáp ứng tốt từ công việc văn phòng, học tập, đồ họa cơ bản cho đến giải trí với các tựa game phổ biến ở mức thiết lập phù hợp. Thiết kế đơn giản, bền bỉ và có bàn phím LED trắng.\n   •   **Cấu hình nổi bật**: CPU Ryzen 5 5500U, GPU GTX 1650, RAM 8GB, SSD 512GB, màn hình 15.6\" FHD.\n\n✨ **[Laptop MSI GF63 Thin](product_detail.php?id=35)** - 16.490.000 VND\n   •   **Điểm mạnh chính**: Nếu bạn ưu tiên trải nghiệm gaming mượt mà hơn một chút, mẫu MSI GF63 Thin này rất đáng cân nhắc. Máy có chip Intel Core i5-11400H hiệu năng cao, đi kèm card đồ họa GTX 1650 Max-Q và đặc biệt là màn hình 15.6 inch với tần số quét 144Hz, giúp hình ảnh trong game và các chuyển động trở nên siêu mượt mà. Máy có thiết kế khá mỏng nhẹ so với một laptop gaming.\n   •   **Cấu hình nổi bật**: CPU i5-11400H, GPU GTX 1650 Max-Q, RAM 8GB, SSD 512GB, màn hình 15.6\" FHD 144Hz.\n\nCả hai mẫu này đều có hiệu năng tốt và card đồ họa rời, giúp bạn làm việc, học tập và giải trí đều ổn định. Bạn muốn ưu tiên về gaming hay một chiếc máy cân bằng hơn cho mọi tác vụ ạ? Hoặc có yêu cầu nào khác về thiết kế, thời lượng pin không?"
           }
         ],
         "role": "model"
@@ -952,23 +952,23 @@ RESP: {
     }
   ],
   "usageMetadata": {
-    "promptTokenCount": 1005,
-    "candidatesTokenCount": 95,
-    "totalTokenCount": 1814,
+    "promptTokenCount": 2235,
+    "candidatesTokenCount": 569,
+    "totalTokenCount": 5211,
     "promptTokensDetails": [
       {
         "modality": "TEXT",
-        "tokenCount": 1005
+        "tokenCount": 2235
       }
     ],
-    "thoughtsTokenCount": 714
+    "thoughtsTokenCount": 2407
   },
   "modelVersion": "gemini-2.5-flash",
-  "responseId": "K7IyacKGLb7zxs0P_rruqQs"
+  "responseId": "vBk2aYXmK-OxkdUPkKvR0A8"
 }
 
 
-2025-12-05 05:22:05 HTTP:200
+2025-12-08 11:51:00 HTTP:200
 CURL_ERR: 
 RESP: {
   "candidates": [
@@ -976,7 +976,7 @@ RESP: {
       "content": {
         "parts": [
           {
-            "text": "Chào bạn! Với mức giá trên 20 triệu, TechShop có 2 mẫu laptop cực kỳ đáng chú ý mà bạn có thể tham khảo đây ạ:\n\n✨ **[Laptop Apple MacBook Air M1 13](product_detail.php?id=69)** - 23.990.000 VND\n   •   **Điểm mạnh chính:** Hiệu năng Apple M1 mạnh mẽ và tối ưu cho công việc văn phòng, học tập, chỉnh sửa ảnh/video nhẹ nhàng; pin dùng siêu lâu lên đến 15 giờ; thiết kế mỏng nhẹ, sang trọng, chỉ 1.29kg; màn hình Retina hiển thị sắc nét. Rất phù hợp với những ai cần một chiếc máy ổn định, bền bỉ và di động cao.\n\n✨ **[Laptop ASUS TUF Gaming F15](product_detail.php?id=66)** - 21.990.000 VND\n   •   **Điểm mạnh chính:** Cấu hình cực mạnh với chip Intel Core i7-12700H và card đồ họa NVIDIA RTX 3060, chiến tốt mọi game AAA hiện nay và cân mượt các tác vụ đồ họa, dựng phim nặng; màn hình 15.6\" Full HD tần số quét 144Hz cực mượt mà cho trải nghiệm gaming đỉnh cao; RAM 16GB và SSD 512GB tốc độ cao giúp đa nhiệm và tải game/ứng dụng nhanh chóng; độ bền đạt chuẩn quân đội, rất yên tâm khi sử dụng.\n\nBạn có muốn tìm hiểu thêm về nhu cầu sử dụng cụ thể của mình không (ví dụ: dùng cho công việc, học tập, chơi game, đồ họa...) để mình có thể tư vấn chi tiết hơn ạ?"
+            "text": "Chào bạn! À, hình như bạn đang nhắc đến việc tìm kiếm sản phẩm công nghệ phải không ạ? Lần trước TechShop đã gợi ý một vài mẫu bàn phím và chuột rồi đó.\n\nBạn muốn tìm kiếm sản phẩm nào khác, hay có yêu cầu gì cụ thể hơn về bàn phím, chuột hoặc các thiết bị khác không ạ? Hãy chia sẻ để TechShop tư vấn tốt nhất cho bạn nha! 😊"
           }
         ],
         "role": "model"
@@ -986,23 +986,23 @@ RESP: {
     }
   ],
   "usageMetadata": {
-    "promptTokenCount": 644,
-    "candidatesTokenCount": 381,
-    "totalTokenCount": 2052,
+    "promptTokenCount": 963,
+    "candidatesTokenCount": 88,
+    "totalTokenCount": 2357,
     "promptTokensDetails": [
       {
         "modality": "TEXT",
-        "tokenCount": 644
+        "tokenCount": 963
       }
     ],
-    "thoughtsTokenCount": 1027
+    "thoughtsTokenCount": 1306
   },
   "modelVersion": "gemini-2.5-flash",
-  "responseId": "TbIyaeHHCN2dxN8P9N-fqAY"
+  "responseId": "9AE3aayyFq2evdIP9uyo2Qw"
 }
 
 
-2025-12-05 05:22:11 HTTP:200
+2025-12-08 11:51:46 HTTP:200
 CURL_ERR: 
 RESP: {
   "candidates": [
@@ -1010,7 +1010,7 @@ RESP: {
       "content": {
         "parts": [
           {
-            "text": "Chào bạn,\n\nRất tiếc hiện tại TechShop chưa có sản phẩm nào trong tầm giá trên 20 triệu VND ạ. Các sản phẩm hiện có trong shop chủ yếu là phụ kiện, thẻ nhớ, USB và ổ cứng di động với mức giá dưới 2 triệu VND thôi ạ.\n\nBạn có muốn mình giới thiệu các sản phẩm khác phù hợp với nhu cầu và tầm giá mong muốn của bạn không? Hoặc bạn có thể cho mình biết bạn đang tìm kiếm loại sản phẩm nào để mình dễ hỗ trợ hơn nhé! 😊"
+            "text": "Chào bạn! Rất vui được hỗ trợ bạn nhé. 😊\n\nKhi bạn hỏi \"có đẹp không\" thì ở TechShop, tụi mình hiểu là bạn đang muốn biết về:\n1.  **Thiết kế, vẻ ngoài:** Một chiếc máy mỏng nhẹ, sang trọng, tinh tế; hay một chiếc laptop gaming mạnh mẽ, cá tính?\n2.  **Hiệu năng:** Máy chạy có mượt mà không, chơi game, làm đồ họa có \"đẹp\" không (tức là mạnh mẽ, trơn tru, không giật lag)?\n3.  **Chất lượng hiển thị:** Màn hình có sắc nét, màu sắc có sống động không?\n\nDựa trên các sản phẩm mình đã gợi ý ở lần trước, có rất nhiều lựa chọn \"đẹp\" tùy theo nhu cầu và sở thích của bạn đó:\n\n*   **Nếu bạn thích sự mỏng nhẹ, sang trọng, tinh tế trong thiết kế:**\n    *   ✨ **[MacBook Air M1 13-inch](product_detail.php?id=31)** / **[Laptop Apple MacBook Air M1 13](product_detail.php?id=69)** - Rất được ưa chuộng vì thiết kế nhôm nguyên khối, siêu mỏng, nhẹ, mang vẻ đẹp hiện đại và hiệu năng ổn định.\n    *   ✨ **[Laptop Dell XPS 13](product_detail.php?id=4)** - Dòng laptop cao cấp với viền màn hình siêu mỏng, thiết kế tinh xảo, rất phù hợp cho doanh nhân, người dùng yêu thích sự thanh lịch.\n    *   ✨ **[Laptop LG Gram 16 siêu nhẹ](product_detail.php?id=71)** - Nếu bạn cần một chiếc máy màn hình lớn (16 inch) nhưng vẫn phải nhẹ như lông hồng (chỉ ~1.2kg) và pin \"trâu\" dùng cả ngày thì đây là vẻ đẹp của sự tiện lợi và tối ưu.\n\n*   **Nếu bạn thích \"đẹp\" về hiệu năng mạnh mẽ để chiến game, làm đồ họa, hoặc xử lý công việc nặng:**\n    *   ✨ **[Laptop ASUS ROG Strix G15](product_detail.php?id=30)** - Một \"chiến binh\" thực thụ với hiệu năng cực kỳ mạnh mẽ (CPU Ryzen 7, GPU RTX 3060), tản nhiệt tốt, thiết kế đậm chất gaming hầm hố, cá tính.\n    *   ✨ **[Laptop Dell G15 5525 RTX 3050Ti](product_detail.php?id=63)**, ✨ **[Laptop ASUS TUF Gaming F15](product_detail.php?id=66)** hay **[Laptop Gigabyte G5 Gaming](product_detail.php?id=72)** - Cũng là những lựa chọn \"đẹp\" về sức mạnh, có thể chiến game và làm đồ họa tốt với mức giá phải chăng hơn.\n\n*   **Nếu bạn quan tâm đến màn hình hiển thị \"đẹp\", rực rỡ, sắc nét:**\n    *   ✨ **[Laptop ASUS VivoBook 14 OLED](product_detail.php?id=70)** - Màn hình OLED cho màu sắc cực kỳ sống động, độ tương phản cao, rất phù hợp cho người làm nội dung hoặc yêu thích xem phim giải trí.\n    *   Hay các màn hình rời như ✨ **[Màn hình Dell UltraSharp 27\" U2720Q](product_detail.php?id=58)** chuyên đồ họa với màu sắc chuẩn xác, độ phân giải 4K sắc nét, mang lại trải nghiệm hình ảnh tuyệt vời.\n\nBạn muốn tìm kiếm vẻ \"đẹp\" ở khía cạnh nào nhất ạ? Hãy cho mình biết để mình tư vấn chi tiết và cụ thể hơn nhé! 😊"
           }
         ],
         "role": "model"
@@ -1020,23 +1020,23 @@ RESP: {
     }
   ],
   "usageMetadata": {
-    "promptTokenCount": 1002,
-    "candidatesTokenCount": 111,
-    "totalTokenCount": 1510,
+    "promptTokenCount": 2936,
+    "candidatesTokenCount": 832,
+    "totalTokenCount": 5359,
     "promptTokensDetails": [
       {
         "modality": "TEXT",
-        "tokenCount": 1002
+        "tokenCount": 2936
       }
     ],
-    "thoughtsTokenCount": 397
+    "thoughtsTokenCount": 1591
   },
   "modelVersion": "gemini-2.5-flash",
-  "responseId": "U7IyabyiEZbqvdIPrt-HyAY"
+  "responseId": "IgI3abKeEqSxnsEP_fHh8A8"
 }
 
 
-2025-12-05 05:22:50 HTTP:200
+2025-12-09 22:47:38 HTTP:200
 CURL_ERR: 
 RESP: {
   "candidates": [
@@ -1044,7 +1044,7 @@ RESP: {
       "content": {
         "parts": [
           {
-            "text": "Chào bạn, để tư vấn laptop cho sinh viên, TechShop có nhiều lựa chọn phù hợp với các nhu cầu và ngân sách khác nhau. Dựa trên danh sách sản phẩm hiện có, mình xin gợi ý một vài mẫu nổi bật sau đây, từ phổ thông đến hiệu năng cao, để bạn dễ dàng lựa chọn nhé:\n\n**1. Cho nhu cầu học tập, văn phòng cơ bản với mức giá tốt:**\n\n*   ✨ **[Laptop HP 15s Intel Core i5](product_detail.php?id=68)** - 12.990.000 VND\n    *   Điểm mạnh chính: Cấu hình Core i5 thế hệ 12 khá mạnh mẽ cho các tác vụ học tập, làm việc văn phòng và giải trí nhẹ nhàng, ổ SSD 512GB đủ dùng, màn hình lớn 15.6 inch. Rất phù hợp cho sinh viên cần một chiếc máy ổn định, bền bỉ.\n\n**2. Đa năng, cấu hình cân bằng, có thể làm đồ họa nhẹ hoặc chơi game giải trí:**\n\n*   ✨ **[Laptop Acer Aspire 7 A715](product_detail.php?id=34)** - 14.000.000 VND\n    *   Điểm mạnh chính: Trang bị CPU Ryzen 5 và card đồ họa rời GTX 1650, mang lại hiệu năng tốt để học tập, làm việc với các phần mềm chuyên ngành nhẹ (AutoCAD, Photoshop cơ bản) và chơi được nhiều tựa game phổ biến ở mức thiết lập vừa phải.\n\n**3. Hiệu năng cao cho sinh viên học kỹ thuật, đồ họa hoặc gaming:**\n\n*   ✨ **[Laptop Gigabyte G5 Gaming](product_detail.php?id=72)** - 19.990.000 VND\n    *   Điểm mạnh chính: Với CPU Intel Core i5 H-series và card đồ họa RTX 3060 6GB cực mạnh, đây là lựa chọn tuyệt vời cho các bạn sinh viên cần máy để lập trình, render video, thiết kế đồ họa 3D hoặc chơi game nặng. Màn hình 144Hz cũng mang lại trải nghiệm mượt mà.\n\n**4. Sang trọng, màn hình đẹp cho học tập và giải trí với nội dung:**\n\n*   ✨ **[Laptop ASUS VivoBook 14 OLED](product_detail.php?id=70)** - 17.990.000 VND\n    *   Điểm mạnh chính: Nổi bật với màn hình OLED rực rỡ, độ tương phản cao, rất lý tưởng cho các bạn học thiết kế, biên tập ảnh/video hoặc đơn giản là thích xem phim, giải trí với chất lượng hình ảnh tốt nhất. Máy còn có CPU i5 Gen 12 và 16GB RAM đủ mạnh cho mọi tác vụ.\n\nBạn quan tâm đến mẫu máy nào hơn, hoặc muốn mình tư vấn kỹ hơn về một tiêu chí cụ thể (như pin lâu, mỏng nhẹ, chuyên game...), đừng ngần ngại cho mình biết nhé!"
+            "text": "Chào bạn! Hiện tại trong danh sách sản phẩm của TechShop không có sản phẩm nào tên là \"usus\" ạ.\n\nBạn có thể vui lòng kiểm tra lại hoặc cho mình biết bạn đang tìm kiếm sản phẩm của thương hiệu nào, hay loại sản phẩm nào không (ví dụ: USB, thẻ nhớ, ổ cứng, balo...)? Mình rất sẵn lòng hỗ trợ tìm kiếm sản phẩm phù hợp cho bạn! 😊"
           }
         ],
         "role": "model"
@@ -1054,23 +1054,23 @@ RESP: {
     }
   ],
   "usageMetadata": {
-    "promptTokenCount": 2907,
-    "candidatesTokenCount": 666,
-    "totalTokenCount": 6275,
+    "promptTokenCount": 1042,
+    "candidatesTokenCount": 86,
+    "totalTokenCount": 1253,
     "promptTokensDetails": [
       {
         "modality": "TEXT",
-        "tokenCount": 2907
+        "tokenCount": 1042
       }
     ],
-    "thoughtsTokenCount": 2702
+    "thoughtsTokenCount": 125
   },
   "modelVersion": "gemini-2.5-flash",
-  "responseId": "erIyacvgKfefxN8P9PC-0QY"
+  "responseId": "Wu04aYjPLO36vdIPmZPl6AQ"
 }
 
 
-2025-12-05 05:23:53 HTTP:200
+2025-12-09 22:47:59 HTTP:200
 CURL_ERR: 
 RESP: {
   "candidates": [
@@ -1078,7 +1078,7 @@ RESP: {
       "content": {
         "parts": [
           {
-            "text": "Chào bạn, với ngân sách trên 30 triệu, TechShop có một số lựa chọn laptop rất đáng cân nhắc, phù hợp với nhiều nhu cầu khác nhau đây ạ:\n\n✨ **[Laptop ASUS ROG Strix G15](product_detail.php?id=30)** - 34.990.000 VND\n   •   Điểm mạnh chính: Đây là một chiếc laptop gaming cực kỳ mạnh mẽ với chip Ryzen 7 6800H và card đồ họa RTX 3060, cùng 16GB RAM và 1TB SSD. Máy có hiệu năng vượt trội cho các game AAA, công việc đồ họa nặng, render video. Hệ thống tản nhiệt cũng được đánh giá cao, giúp máy luôn ổn định khi hoạt động cường độ cao.\n   •   Phù hợp cho: Game thủ, người làm đồ họa, kiến trúc sư, editor video.\n\n✨ **[Laptop LG Gram 16 siêu nhẹ](product_detail.php?id=71)** - 30.990.000 VND\n   •   Điểm mạnh chính: Nổi bật với trọng lượng siêu nhẹ chỉ khoảng 1.2kg và thời lượng pin ấn tượng lên đến 19 giờ, rất lý tưởng cho những ai thường xuyên phải di chuyển. Màn hình 16 inch độ phân giải WQXGA sắc nét cùng cấu hình Intel Core i7, 16GB RAM và 512GB SSD đảm bảo hiệu suất mượt mà cho công việc văn phòng, học tập và giải trí.\n   •   Phù hợp cho: Doanh nhân, sinh viên, người làm văn phòng, những ai cần một chiếc laptop mỏng nhẹ, pin lâu để làm việc mọi lúc mọi nơi.\n\nBạn quan tâm đến nhu cầu sử dụng chính là gì (ví dụ: chơi game, làm việc văn phòng, đồ họa, hay cần máy nhẹ để di chuyển nhiều)? Mình có thể tư vấn chi tiết hơn để bạn chọn được chiếc máy ưng ý nhất nhé!"
+            "text": "Chào bạn! TechShop đã gợi ý một số sản phẩm ASUS ở lần trước rồi ạ. Bạn muốn tìm sản phẩm nào cụ thể hơn không? Ví dụ như bạn đang cần laptop để làm việc, học tập, chơi game, hay đang tìm màn hình, linh kiện máy tính chẳng hạn? Hoặc bạn có ngân sách khoảng bao nhiêu để TechShop gợi ý sát hơn ạ?\n\nĐể bạn tiện tham khảo lại, dưới đây là một số sản phẩm ASUS nổi bật mà bên mình có nhé:\n\n✨ **[Laptop ASUS ROG Strix G15](product_detail.php?id=30)** - 34.990.000 VND\n   • Điểm mạnh chính: Laptop gaming hiệu năng cực cao với chip Ryzen 7 và card RTX 3060, tản nhiệt tốt, lý tưởng cho các game thủ chuyên nghiệp và người dùng cần xử lý đồ họa nặng.\n\n✨ **[Laptop ASUS TUF Gaming F15](product_detail.php?id=66)** - 21.990.000 VND\n   • Điểm mạnh chính: Thiết kế bền bỉ đạt chuẩn quân đội, cấu hình mạnh mẽ với Intel Core i7 và RTX 3060, màn hình 144Hz mượt mà, rất phù hợp cho game thủ tầm trung muốn sự ổn định và bền bỉ.\n\n✨ **[Laptop ASUS VivoBook 14 OLED](product_detail.php?id=70)** - 17.990.000 VND\n   • Điểm mạnh chính: Màn hình OLED 14 inch siêu đẹp, màu sắc rực rỡ và độ tương phản cao, rất lý tưởng cho công việc sáng tạo nội dung, xem phim và giải trí, thiết kế mỏng nhẹ và có bảo mật vân tay tiện lợi.\n\nNgoài ra, TechShop còn có các sản phẩm ASUS khác như màn hình gaming hay linh kiện bo mạch chủ. Bạn cứ nói rõ nhu cầu nhé, TechShop sẽ hỗ trợ bạn tìm được sản phẩm ưng ý nhất! 😊"
           }
         ],
         "role": "model"
@@ -1088,162 +1088,19 @@ RESP: {
     }
   ],
   "usageMetadata": {
-    "promptTokenCount": 595,
-    "candidatesTokenCount": 430,
-    "totalTokenCount": 1899,
+    "promptTokenCount": 1032,
+    "candidatesTokenCount": 437,
+    "totalTokenCount": 3361,
     "promptTokensDetails": [
       {
         "modality": "TEXT",
-        "tokenCount": 595
+        "tokenCount": 1032
       }
     ],
-    "thoughtsTokenCount": 874
+    "thoughtsTokenCount": 1892
   },
   "modelVersion": "gemini-2.5-flash",
-  "responseId": "ubIyadmBFqOyvdIPtYfrsAY"
-}
-
-
-2025-12-05 05:24:13 HTTP:200
-CURL_ERR: 
-RESP: {
-  "candidates": [
-    {
-      "content": {
-        "parts": [
-          {
-            "text": "Chào bạn! Lần trước bạn có hỏi tìm sản phẩm trên 30 triệu, và mình đã gợi ý 2 mẫu laptop này. Bạn có muốn tham khảo lại không ạ? Đây là những lựa chọn rất tốt trong tầm giá đó:\n\n✨ **[Laptop ASUS ROG Strix G15](product_detail.php?id=30)** - 34.990.000 VND\n   • Điểm mạnh chính: Hiệu năng gaming cực mạnh mẽ với chip Ryzen 7 và card đồ họa RTX 3060, tản nhiệt tốt, rất lý tưởng cho game thủ hoặc những ai làm đồ họa chuyên nghiệp.\n\n✨ **[Laptop LG Gram 16 siêu nhẹ](product_detail.php?id=71)** - 30.990.000 VND\n   • Điểm mạnh chính: Siêu nhẹ chỉ khoảng 1.2kg, màn hình 16 inch WQXGA sắc nét cùng thời lượng pin lên đến 19 giờ, cực kỳ phù hợp cho công việc văn phòng, học tập hoặc những ai hay di chuyển nhiều.\n\nBạn thấy 2 mẫu này thế nào ạ? Hay bạn đang tìm kiếm sản phẩm với tiêu chí cụ thể hơn (ví dụ: cần máy chơi game, máy mỏng nhẹ, hay máy để làm việc...)? Cứ cho mình biết nhé!"
-          }
-        ],
-        "role": "model"
-      },
-      "finishReason": "STOP",
-      "index": 0
-    }
-  ],
-  "usageMetadata": {
-    "promptTokenCount": 591,
-    "candidatesTokenCount": 288,
-    "totalTokenCount": 2370,
-    "promptTokensDetails": [
-      {
-        "modality": "TEXT",
-        "tokenCount": 591
-      }
-    ],
-    "thoughtsTokenCount": 1491
-  },
-  "modelVersion": "gemini-2.5-flash",
-  "responseId": "zLIyaaymO8SuxN8P7-OKyAo"
-}
-
-
-2025-12-05 05:24:43 HTTP:200
-CURL_ERR: 
-RESP: {
-  "candidates": [
-    {
-      "content": {
-        "parts": [
-          {
-            "text": "Chào bạn! 😊\n\nDạ vâng, TechShop có một số lựa chọn rất đáng giá trong tầm giá trên 20 triệu đồng đấy ạ. Hai mẫu laptop em từng giới thiệu ở lần trước vẫn rất phù hợp với tiêu chí này, và mỗi máy đều có những điểm mạnh riêng biệt:\n\n✨ **[Laptop ASUS ROG Strix G15](product_detail.php?id=30)** - 34.990.000 VND\n   • Điểm mạnh chính: Đây là lựa chọn tuyệt vời cho game thủ và những ai cần hiệu năng cực mạnh. Với chip Ryzen 7 6800H và card đồ họa RTX 3060, máy có thể \"cân\" mượt mà mọi tựa game AAA và các tác vụ đồ họa, dựng phim chuyên nghiệp. Hệ thống tản nhiệt cũng được tối ưu để đảm bảo hiệu suất ổn định.\n\n✨ **[Laptop LG Gram 16 siêu nhẹ](product_detail.php?id=71)** - 30.990.000 VND\n   • Điểm mạnh chính: Nếu ưu tiên sự gọn nhẹ và di động, đây là \"chân ái\" ạ. Máy chỉ nặng khoảng 1.2kg, cùng với thời lượng pin cực khủng lên đến 19 giờ, rất lý tưởng cho người hay di chuyển, làm việc văn phòng, học tập. Màn hình 16 inch WQXGA sắc nét cũng mang lại trải nghiệm xem đã mắt.\n\nBạn đang tìm kiếm laptop cho mục đích sử dụng cụ thể nào ạ (ví dụ: chơi game, làm việc văn phòng, đồ họa, hay cần máy nhẹ nhàng dễ mang đi)? Em có thể tư vấn chi tiết hơn để bạn chọn được chiếc máy ưng ý nhất!"
-          }
-        ],
-        "role": "model"
-      },
-      "finishReason": "STOP",
-      "index": 0
-    }
-  ],
-  "usageMetadata": {
-    "promptTokenCount": 591,
-    "candidatesTokenCount": 376,
-    "totalTokenCount": 2029,
-    "promptTokensDetails": [
-      {
-        "modality": "TEXT",
-        "tokenCount": 591
-      }
-    ],
-    "thoughtsTokenCount": 1062
-  },
-  "modelVersion": "gemini-2.5-flash",
-  "responseId": "67Iyaa-3DKuwxN8PqPil2Qo"
-}
-
-
-2025-12-05 05:30:20 HTTP:200
-CURL_ERR: 
-RESP: {
-  "candidates": [
-    {
-      "content": {
-        "parts": [
-          {
-            "text": "Chào bạn!\n\nBạn muốn thêm sản phẩm **[Laptop HP 15s Intel Core i5](product_detail.php?id=68)** có giá **12.990.000 VND** vào giỏ hàng đúng không ạ?\n\nDạ vâng, mình đã thêm sản phẩm này vào giỏ hàng của bạn rồi nhé! Nếu bạn cần tìm thêm sản phẩm nào khác hoặc muốn xem chi tiết giỏ hàng, đừng ngần ngại cho mình biết nhé! 😊"
-          }
-        ],
-        "role": "model"
-      },
-      "finishReason": "STOP",
-      "index": 0
-    }
-  ],
-  "usageMetadata": {
-    "promptTokenCount": 2896,
-    "candidatesTokenCount": 105,
-    "totalTokenCount": 3284,
-    "promptTokensDetails": [
-      {
-        "modality": "TEXT",
-        "tokenCount": 2896
-      }
-    ],
-    "thoughtsTokenCount": 283
-  },
-  "modelVersion": "gemini-2.5-flash",
-  "responseId": "O7QyadDfO8ynkdUP0cSP8Q8"
-}
-
-
-2025-12-05 05:30:54 HTTP:200
-CURL_ERR: 
-RESP: {
-  "candidates": [
-    {
-      "content": {
-        "parts": [
-          {
-            "text": "Chào bạn!\nDạ vâng, tôi đã thêm **[Laptop HP 15s Intel Core i5](product_detail.php?id=68)** trị giá 12.990.000 VND vào giỏ hàng của bạn rồi nhé.\n\nBạn có muốn xem thêm phụ kiện đi kèm hoặc có câu hỏi nào khác về sản phẩm này không ạ?"
-          }
-        ],
-        "role": "model"
-      },
-      "finishReason": "STOP",
-      "index": 0
-    }
-  ],
-  "usageMetadata": {
-    "promptTokenCount": 2896,
-    "candidatesTokenCount": 82,
-    "totalTokenCount": 3305,
-    "cachedContentTokenCount": 2031,
-    "promptTokensDetails": [
-      {
-        "modality": "TEXT",
-        "tokenCount": 2896
-      }
-    ],
-    "cacheTokensDetails": [
-      {
-        "modality": "TEXT",
-        "tokenCount": 2031
-      }
-    ],
-    "thoughtsTokenCount": 327
-  },
-  "modelVersion": "gemini-2.5-flash",
-  "responseId": "XrQyaf3yLtGlkdUP4qr28AM"
+  "responseId": "b-04aa-WL-uOvdIP-djQkAY"
 }
 
 

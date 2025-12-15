@@ -1,14 +1,10 @@
 // JS for profile page
 document.addEventListener('DOMContentLoaded', async () => {
-    // Load profile info including avatar
     await loadProfile();
-    // Bind section navigation
     bindProfileNav();
-    // Bind profile update and password change
     bindProfileForms();
-    // Load addresses
     loadAddresses();
-    // Bind address form
+
     const addressForm = document.getElementById('address-form');
     if (addressForm) {
         addressForm.addEventListener('submit', async (e) => {
@@ -39,7 +35,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     showNotification(data.error || 'Không thể thêm địa chỉ', 'error');
                     return;
                 }
-                // Thêm thành công -> load lại danh sách và thông báo
                 showNotification(data.message || 'Đã thêm địa chỉ.', 'success');
                 addressForm.reset();
                 loadAddresses();
@@ -50,10 +45,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // ==== Dynamic district selection based on province (city) ====
     const citySelect = document.getElementById('addr-city');
     const districtSelect = document.getElementById('addr-district');
-    // Mapping of provinces/cities in northern Vietnam to their districts
     const districtsByProvince = {
         "Ha Noi": [
             "Ba Đình", "Hoàn Kiếm", "Hai Bà Trưng", "Đống Đa", "Tây Hồ", "Cầu Giấy", "Thanh Xuân", "Long Biên", "Nam Từ Liêm", "Bắc Từ Liêm", "Hà Đông"
@@ -92,7 +85,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (citySelect && districtSelect) {
         citySelect.addEventListener('change', function() {
             const val = citySelect.value;
-            // Reset districts
             districtSelect.innerHTML = '<option value="">--- Chọn quận/huyện ---</option>';
             if (districtsByProvince[val]) {
                 districtsByProvince[val].forEach(function(d) {
@@ -104,9 +96,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
-    // Load vouchers
     loadVouchers();
-    // Bind avatar change handler with cropping
+    updateOrderStat();
     bindChangeAvatar();
 });
 
@@ -118,6 +109,12 @@ async function loadProfile() {
             document.getElementById('profile-name').value = user.name || '';
             document.getElementById('profile-email').value = user.email || '';
             document.getElementById('profile-phone').value = user.phone || '';
+            const nameDisplay = document.getElementById('profile-name-display');
+            const emailDisplay = document.getElementById('profile-email-display');
+            const phoneDisplay = document.getElementById('profile-phone-display');
+            if (nameDisplay) nameDisplay.textContent = user.name || 'Người dùng';
+            if (emailDisplay) emailDisplay.textContent = user.email || 'Chưa có email';
+            if (phoneDisplay) phoneDisplay.textContent = user.phone || 'Chưa cập nhật số điện thoại';
             const avatarPreview = document.getElementById('avatar-preview');
             if (user.avatar) {
                 avatarPreview.src = '/assets/images/avatars/' + user.avatar;
@@ -131,20 +128,31 @@ async function loadProfile() {
 }
 
 function bindProfileNav() {
-    const navLinks = document.querySelectorAll('.profile-nav a[data-section]');
+    const navLinks = document.querySelectorAll('.profile-nav a[data-section], .profile-shortcut[data-section]');
+    const sectionLinks = document.querySelectorAll('.profile-nav a[data-section]');
+    const sections = document.querySelectorAll('.profile-section');
+
+    function showSection(id) {
+        sections.forEach(sec => sec.classList.add('hidden'));
+        const target = document.getElementById(id + '-section');
+        if (target) target.classList.remove('hidden');
+        sectionLinks.forEach(l => {
+            const secId = l.getAttribute('data-section');
+            l.classList.toggle('active', secId === id);
+        });
+    }
+
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            // Remove active class from all links
-            navLinks.forEach(l => l.classList.remove('active'));
-            this.classList.add('active');
             const sectionId = this.getAttribute('data-section');
-            // Hide all sections
-            document.querySelectorAll('.profile-section').forEach(sec => sec.classList.add('hidden'));
-            // Show selected section
-            document.getElementById(sectionId + '-section').classList.remove('hidden');
+            if (!sectionId) return;
+            showSection(sectionId);
         });
     });
+
+    // Hiển thị mặc định
+    showSection('account');
 }
 
 function bindProfileForms() {
@@ -272,8 +280,12 @@ async function loadAddresses() {
         container.innerHTML = '';
         if (!Array.isArray(list) || list.length === 0) {
             container.innerHTML = '<p>Chưa có địa chỉ giao hàng.</p>';
+            const addressStat = document.getElementById('stat-address-count');
+            if (addressStat) addressStat.textContent = '0';
             return;
         }
+        const addressStat = document.getElementById('stat-address-count');
+        if (addressStat) addressStat.textContent = list.length;
         list.forEach(addr => {
             const div = document.createElement('div');
             div.className = 'address-item';
@@ -321,8 +333,12 @@ async function loadVouchers() {
         container.innerHTML = '';
         if (!Array.isArray(vouchers) || vouchers.length === 0) {
             container.innerHTML = '<p>Không có voucher khả dụng.</p>';
+            const voucherStat = document.getElementById('stat-voucher-count');
+            if (voucherStat) voucherStat.textContent = '0';
             return;
         }
+        const voucherStat = document.getElementById('stat-voucher-count');
+        if (voucherStat) voucherStat.textContent = vouchers.length;
         vouchers.forEach(v => {
             const div = document.createElement('div');
             div.className = 'voucher-item';
@@ -334,6 +350,21 @@ async function loadVouchers() {
         console.error(err);
         const container = document.getElementById('voucher-list');
         if (container) container.innerHTML = '<p>Lỗi khi tải voucher.</p>';
+        const voucherStat = document.getElementById('stat-voucher-count');
+        if (voucherStat) voucherStat.textContent = '--';
+    }
+}
+
+async function updateOrderStat() {
+    try {
+        const res = await fetch('/api/get_order_history.php');
+        const orders = await res.json();
+        const orderStat = document.getElementById('stat-order-count');
+        if (orderStat && Array.isArray(orders)) {
+            orderStat.textContent = orders.length;
+        }
+    } catch (err) {
+        console.error(err);
     }
 }
 

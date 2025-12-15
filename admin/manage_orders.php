@@ -3,23 +3,43 @@
 // Include admin header (enforces admin authentication and opens <main>)
 include __DIR__ . '/../includes/admin_header.php';
 ?>
-    <!-- Nội dung trang quản lý đơn hàng -->
-    <h2>Quản lý đơn hàng</h2>
-    <div class="admin-card">
-    <table class="admin-table" id="orders-table">
-        <thead>
-            <tr>
-                <th>Mã đơn</th><th>Khách hàng</th><th>Thành tiền</th><th>Trạng thái</th><th>Ngày tạo</th><th>Hành động</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Đơn hàng sẽ được tải bằng JS -->
-        </tbody>
-    </table>
+<div class="app-page-title admin-page-title">
+    <div class="page-title-wrapper">
+        <div class="page-title-heading">
+            <div class="page-title-icon">
+                <i class="pe-7s-cart text-primary"></i>
+            </div>
+            <div>
+                Quản lý đơn hàng
+                <div class="page-title-subheading">Cập nhật trạng thái và xem chi tiết từng đơn.</div>
+            </div>
+        </div>
     </div>
-</main>
-<?php include __DIR__ . '/../includes/footer.php'; ?>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle admin-table mb-0" id="orders-table">
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th><th>Khách hàng</th><th>Thành tiền</th><th>Trạng thái</th><th>Ngày tạo</th><th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Đơn hàng sẽ được tải bằng JS -->
+                </tbody>
+            </table>
+        </div>
+        <div id="orders-pagination" class="pagination-wrap"></div>
+    </div>
+</div>
+
 <script>
+let ordersData = [];
+const perPage = 20;
+let currentPage = 1;
+
 document.addEventListener('DOMContentLoaded', () => {
     loadOrders();
 });
@@ -27,8 +47,22 @@ async function loadOrders() {
     try {
         const res = await fetch('/api/get_admin_orders.php');
         const orders = await res.json();
-        const tbody = document.querySelector('#orders-table tbody');
-        tbody.innerHTML = '';
+        ordersData = orders || [];
+        currentPage = 1;
+        renderOrders();
+        renderPagination();
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function renderOrders() {
+    const tbody = document.querySelector('#orders-table tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const start = (currentPage - 1) * perPage;
+    const pageItems = ordersData.slice(start, start + perPage);
+    if (!pageItems.length) return;
         // Danh sách trạng thái với nhãn tiếng Việt. Giá trị giữ nguyên để gửi cho API.
         const statusList = [
             { value: 'Pending', label: 'Đang chờ' },
@@ -37,7 +71,7 @@ async function loadOrders() {
             { value: 'Completed', label: 'Hoàn thành' },
             { value: 'Cancelled', label: 'Đã hủy' }
         ];
-        orders.forEach(order => {
+        pageItems.forEach(order => {
             const tr = document.createElement('tr');
             // Tạo các option cho select với nhãn tiếng Việt và đánh dấu chọn phù hợp
             const optionsHtml = statusList.map(st => {
@@ -69,10 +103,45 @@ async function loadOrders() {
             });
             tbody.appendChild(tr);
         });
-    } catch (err) {
-        console.error(err);
-    }
 }
+
+function renderPagination() {
+    const container = document.getElementById('orders-pagination');
+    if (!container) return;
+    const totalPages = Math.max(1, Math.ceil(ordersData.length / perPage));
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    let html = '<div class="pagination-circles">';
+    html += currentPage > 1
+        ? `<a href="#" data-page="${currentPage - 1}" aria-label="Trang trước">←</a>`
+        : `<span class="disabled">←</span>`;
+    for (let p = 1; p <= totalPages; p++) {
+        if (p === currentPage) {
+            html += `<span class="active">${p}</span>`;
+        } else {
+            html += `<a href="#" data-page="${p}">${p}</a>`;
+        }
+    }
+    html += currentPage < totalPages
+        ? `<a href="#" data-page="${currentPage + 1}" aria-label="Trang sau">→</a>`
+        : `<span class="disabled">→</span>`;
+    html += '</div>';
+    container.innerHTML = html;
+    container.querySelectorAll('a[data-page]').forEach(a => {
+        a.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = parseInt(a.getAttribute('data-page'), 10);
+            if (!isNaN(target)) {
+                currentPage = target;
+                renderOrders();
+                renderPagination();
+            }
+        });
+    });
+}
+
 function changeStatus(select) {
     // no immediate action; update occurs on button click
 }
@@ -117,3 +186,4 @@ async function deleteOrder(orderId, btn) {
     }
 }
 </script>
+<?php include __DIR__ . '/../includes/admin_footer.php'; ?>

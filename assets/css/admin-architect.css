@@ -1,0 +1,595 @@
+/* Overrides and helpers to blend existing admin pages with ArchitectUI */
+/* ===== Base layout, inspired by ArchitectUI but self-hosted ===== */
+body.admin-layout {
+    margin: 0;
+    font-family: 'Poppins', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #f4f7fb;
+    color: #1f2d3d;
+}
+
+.app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.app-header {
+    position: fixed;
+    top: 0;
+    left: 240px;
+    right: 0;
+    height: 64px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 0 20px;
+    z-index: 10;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.logo-text {
+    background: none !important;
+    font-size: 22px;
+    font-weight: 800;
+    color: #2f6bff;
+    letter-spacing: 0.2px;
+    text-decoration: none;
+}
+.logo-accent {
+    color: #ffd54f;
+}
+
+.user-block {
+    text-align: right;
+}
+.user-name {
+    font-weight: 700;
+    font-size: 14px;
+    color: #27354a;
+}
+.user-role {
+    font-size: 12px;
+    color: #7a869a;
+}
+
+.app-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 240px;
+    height: 100vh;
+    background: linear-gradient(180deg, #4c6fff 0%, #3a57e8 100%);
+    color: #fff;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.08);
+    z-index: 11;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.app-header__logo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    padding: 0 18px;
+    font-weight: 700;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.logo-src {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    transition: opacity 0.3s ease;
+}
+
+.logo-src .logo-accent {
+    color: #ffd54f;
+}
+
+.header__pane {
+    display: flex;
+    align-items: center;
+}
+
+.ml-auto {
+    margin-left: auto;
+}
+
+.app-sidebar__inner {
+    padding: 12px 0 24px;
+}
+
+.vertical-nav-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.vertical-nav-menu .app-sidebar__heading {
+    padding: 10px 22px;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.4px;
+    color: rgba(255,255,255,0.7);
+}
+
+.vertical-nav-menu a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 22px;
+    color: #e8edff;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.vertical-nav-menu a .metismenu-icon {
+    width: 18px;
+    text-align: center;
+}
+
+.vertical-nav-menu a:hover {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+}
+
+.vertical-nav-menu a.mm-active {
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    font-weight: 600;
+}
+
+.app-main {
+    flex: 1;
+    margin-left: 240px;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-main__outer {
+    padding-top: 64px;
+}
+
+.app-main__inner {
+    padding: 26px;
+}
+
+/* Hamburger button styles - ArchitectUI style */
+.hamburger {
+    display: inline-block;
+    cursor: pointer;
+    transition-property: opacity, filter;
+    transition-duration: 0.15s;
+    transition-timing-function: linear;
+    font: inherit;
+    color: inherit;
+    text-transform: none;
+    background-color: transparent;
+    border: 0;
+    margin: 0;
+    overflow: visible;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.hamburger:hover {
+    opacity: 0.8;
+    background: rgba(255,255,255,0.1);
+}
+
+.hamburger-box {
+    width: 24px;
+    height: 18px;
+    display: inline-block;
+    position: relative;
+}
+
+.hamburger-inner {
+    display: block;
+    top: 50%;
+    margin-top: -1.5px;
+}
+
+.hamburger-inner,
+.hamburger-inner::before,
+.hamburger-inner::after {
+    width: 24px;
+    height: 3px;
+    background-color: #fff;
+    border-radius: 2px;
+    position: absolute;
+    transition-property: transform;
+    transition-duration: 0.15s;
+    transition-timing-function: ease;
+}
+
+.hamburger-inner::before,
+.hamburger-inner::after {
+    content: "";
+    display: block;
+}
+
+.hamburger-inner::before {
+    top: -8px;
+}
+
+.hamburger-inner::after {
+    bottom: -8px;
+}
+
+/* Elastic animation */
+.hamburger--elastic .hamburger-inner {
+    top: 1.5px;
+    transition-duration: 0.275s;
+    transition-timing-function: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.hamburger--elastic .hamburger-inner::before {
+    top: 8px;
+    transition: opacity 0.125s 0.275s ease;
+}
+
+.hamburger--elastic .hamburger-inner::after {
+    top: 16px;
+    transition: transform 0.275s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.hamburger--elastic.is-active .hamburger-inner {
+    transform: translate3d(0, 8px, 0) rotate(135deg);
+    transition-delay: 0.075s;
+}
+
+.hamburger--elastic.is-active .hamburger-inner::before {
+    transition-delay: 0s;
+    opacity: 0;
+}
+
+.hamburger--elastic.is-active .hamburger-inner::after {
+    transform: translate3d(0, -16px, 0) rotate(-270deg);
+    transition-delay: 0.075s;
+}
+
+/* Closed sidebar transitions */
+.closed-sidebar .app-sidebar {
+    width: 70px;
+}
+
+.closed-sidebar .app-main,
+.closed-sidebar .app-header {
+    margin-left: 70px;
+    left: 70px;
+}
+
+.closed-sidebar .logo-src {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+}
+
+.closed-sidebar .vertical-nav-menu a {
+    justify-content: center;
+    padding: 12px;
+}
+
+.closed-sidebar .vertical-nav-menu a span:not(.metismenu-icon) {
+    display: none;
+}
+
+.closed-sidebar .app-sidebar__heading {
+    padding: 10px;
+    text-align: center;
+    font-size: 10px;
+}
+
+.admin-page-title {
+    margin-bottom: 20px;
+}
+
+.admin-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+}
+
+.card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(4, 24, 61, 0.08);
+    margin-bottom: 20px;
+    border: 1px solid #e5e9f2;
+}
+.card-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid #e9edf5;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.card-body {
+    padding: 18px;
+}
+.card-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+.card-title .text-muted {
+    font-size: 12px;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.table th,
+.table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f0f2f7;
+    font-size: 14px;
+}
+.table thead th {
+    background: #4567f2;
+    color: #fff;
+    font-weight: 600;
+}
+.table-striped tbody tr:nth-child(even) {
+    background: #f8faff;
+}
+.table-hover tbody tr:hover {
+    background: #eef2fb;
+}
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.admin-card h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.admin-table thead {
+    background: linear-gradient(90deg, #4c6fff, #3a57e8);
+    color: #fff;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 12px 14px;
+    text-align: left;
+}
+
+.admin-table tr:nth-child(even) {
+    background-color: #f7f9fc;
+}
+
+.admin-table tr:hover {
+    background-color: #eef2fb;
+}
+
+.admin-form label {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 12px;
+    font-weight: 500;
+    color: #34495e;
+}
+
+.admin-form input,
+.admin-form select,
+.admin-form textarea {
+    margin-top: 6px;
+    border-radius: 8px;
+    border: 1px solid #d6d9e0;
+    padding: 10px 12px;
+    font-size: 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-form input:focus,
+.admin-form select:focus,
+.admin-form textarea:focus {
+    outline: none;
+    border-color: #3a57e8;
+    box-shadow: 0 0 0 2px rgba(58, 87, 232, 0.2);
+}
+
+.admin-form button,
+.btn-edit,
+.btn-delete,
+.btn-add-product {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.admin-form button,
+.btn-add-product {
+    background: linear-gradient(90deg, #3a57e8, #4c6fff);
+    color: #fff;
+}
+
+.btn-edit {
+    background: #00b894;
+    color: #fff;
+}
+
+.btn-delete {
+    background: #ff6b6b;
+    color: #fff;
+}
+
+.btn-edit:hover,
+.btn-delete:hover,
+.admin-form button:hover,
+.btn-add-product:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.1s ease, box-shadow 0.12s ease, background 0.15s ease;
+}
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+}
+.btn-sm { padding: 6px 10px; font-size: 13px; }
+.btn-primary { background: linear-gradient(90deg, #3a57e8, #4c6fff); color: #fff; }
+.btn-outline-secondary { background: #fff; color: #4b5671; border: 1px solid #d8deeb; }
+.btn-success { background: #00b894; color: #fff; }
+.btn-danger { background: #ff6b6b; color: #fff; }
+.btn-light { background: #f5f7fb; color: #2c3e50; border: 1px solid #e3e8f0; }
+
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+}
+
+.admin-stat-card {
+    background: linear-gradient(135deg, #3a57e8, #6c8bff);
+    color: #fff;
+    padding: 18px;
+    border-radius: 14px;
+    box-shadow: 0 10px 24px rgba(58, 87, 232, 0.25);
+}
+
+.admin-stat-card h4 {
+    margin: 0 0 6px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.admin-stat-card p {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.chart-wrapper {
+    min-height: 320px;
+}
+
+.table-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.admin-section-spacer {
+    margin-top: 24px;
+}
+
+.architect-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.06);
+    padding: 20px;
+}
+
+.badge-soft {
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-soft-success {
+    background: rgba(34, 197, 94, 0.18);
+    color: #1f9d55;
+}
+
+.badge-soft-warning {
+    background: rgba(251, 191, 36, 0.18);
+    color: #b7791f;
+}
+
+.badge-soft-info {
+    background: rgba(59, 130, 246, 0.18);
+    color: #2563eb;
+}
+
+.badge-soft-danger {
+    background: rgba(239, 68, 68, 0.18);
+    color: #c53030;
+}
+
+/* Pagination style (circular, centered) */
+.pagination-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+}
+.pagination-circles {
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 10px;
+}
+.pagination-circles a,
+.pagination-circles span {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid #d0d7de;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #3a3f51;
+    text-decoration: none;
+    font-weight: 600;
+    background: #fff;
+    transition: all 0.18s ease;
+}
+.pagination-circles a:hover {
+    border-color: #3a57e8;
+    color: #3a57e8;
+}
+.pagination-circles .active {
+    background: #3a57e8;
+    color: #fff;
+    border-color: #3a57e8;
+}
+
