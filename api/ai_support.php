@@ -997,7 +997,7 @@ if ($info !== '') {
    Gọi API Gemini
    ============================================================ */
 
-$apiKey = 'AIzaSyCwxFYtseamm6v5mzzX-TOjhUoq2fdWV3E' ?: '';
+$apiKey = '' ?: '';
 
 if (!$apiKey) {
     ai_respond_and_log(false, 'Chưa cấu hình khóa API Gemini.', $sessionId, $currentUserId, $query);
