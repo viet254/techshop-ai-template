@@ -394,6 +394,62 @@ body.admin-layout {
     background-color: #eef2fb;
 }
 
+.admin-order-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-order-thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #f1f3fb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.admin-order-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.admin-order-thumb--empty span {
+    font-size: 18px;
+    color: #9ca3af;
+}
+
+.admin-order-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.admin-order-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #111827;
+}
+
+.admin-order-meta {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.admin-user-actions {
+    min-width: 230px;
+}
+
+.admin-user-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .admin-form label {
     display: flex;
     flex-direction: column;

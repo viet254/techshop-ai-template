@@ -23,7 +23,7 @@ include __DIR__ . '/../includes/admin_header.php';
             <table class="table table-striped table-hover align-middle admin-table mb-0" id="orders-table">
                 <thead>
                     <tr>
-                        <th>Mã đơn</th><th>Khách hàng</th><th>Thành tiền</th><th>Trạng thái</th><th>Ngày tạo</th><th>Hành động</th>
+                        <th>Đơn hàng</th><th>Khách hàng</th><th>Thành tiền</th><th>Trạng thái</th><th>Ngày tạo</th><th>Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -73,13 +73,28 @@ function renderOrders() {
         ];
         pageItems.forEach(order => {
             const tr = document.createElement('tr');
+            const firstName = order.first_product_name || 'Đơn hàng';
+            const itemsCount = order.items_count ? Number(order.items_count) : null;
+            const moreItemsText = itemsCount && itemsCount > 1 ? ` +${itemsCount - 1} SP khác` : '';
+            const imageHtml = order.first_product_image
+                ? `<div class="admin-order-thumb"><img src="/assets/images/${order.first_product_image}" alt="${firstName}"></div>`
+                : '<div class="admin-order-thumb admin-order-thumb--empty"><span>?</span></div>';
+            const orderCellHtml = `
+                <div class="admin-order-main">
+                    ${imageHtml}
+                    <div class="admin-order-text">
+                        <div class="admin-order-title">${firstName}${moreItemsText}</div>
+                        <div class="admin-order-meta">Mã: <a href="/admin/order_detail.php?id=${order.id}">#${order.id}</a></div>
+                    </div>
+                </div>
+            `;
             // Tạo các option cho select với nhãn tiếng Việt và đánh dấu chọn phù hợp
             const optionsHtml = statusList.map(st => {
                 const selected = (order.status || '').toLowerCase() === st.value.toLowerCase() ? 'selected' : '';
                 return `<option value="${st.value}" ${selected}>${st.label}</option>`;
             }).join('');
             tr.innerHTML = `
-                <td><a href="/admin/order_detail.php?id=${order.id}">#${order.id}</a></td>
+                <td>${orderCellHtml}</td>
                 <td>${order.username || 'Unknown'}</td>
                 <td>${Number(order.final_total).toLocaleString()}₫</td>
                 <td>

@@ -43,6 +43,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         filtered.forEach(order => {
+            const firstName = order.first_product_name || 'Đơn hàng';
+            const itemsCount = order.items_count ? Number(order.items_count) : null;
+            const moreItemsText = itemsCount && itemsCount > 1 ? ` +${itemsCount - 1} sản phẩm khác` : '';
+            const imageHtml = order.first_product_image 
+                ? `<div class="order-thumb"><img src="assets/images/${order.first_product_image}" alt="${firstName}"></div>`
+                : '';
             const div = document.createElement('div');
             div.className = 'order-card';
             const statusText = getStatusText(order.status);
@@ -52,11 +58,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 cancelBtnHtml = `<button class="cancel-order" data-id="${order.id}">Hủy đơn</button>`;
             }
             div.innerHTML = `
-                <p>Mã đơn: <a href="/order_detail.php?id=${order.id}">#${order.id}</a></p>
-                <p>Ngày tạo: ${order.created_at}</p>
-                <p>Tổng: ${Number(order.final_total).toLocaleString()}₫</p>
-                <p>Trạng thái: ${statusText}</p>
-                ${cancelBtnHtml}
+                ${imageHtml}
+                <div class="order-main">
+                    <p class="order-title">${firstName}${moreItemsText}</p>
+                    <p class="order-meta">Mã đơn: <a href="/order_detail.php?id=${order.id}">#${order.id}</a> · ${order.created_at}</p>
+                    <p class="order-status-text">Trạng thái: ${statusText}</p>
+                    <p class="order-total">Tổng: ${Number(order.final_total).toLocaleString()}₫</p>
+                    ${cancelBtnHtml}
+                </div>
             `;
             // Khi click vào thẻ đơn hàng, điều hướng tới trang chi tiết (trừ khi nhấn nút Hủy)
             div.addEventListener('click', function(e) {

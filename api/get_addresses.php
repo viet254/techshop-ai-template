@@ -11,10 +11,10 @@ if (!isset($_SESSION['user'])) {
 
 $userId = (int)$_SESSION['user']['id'];
 $stmt = $conn->prepare("
-    SELECT id, recipient_name, email, phone, city, district, address
+    SELECT id, recipient_name, email, phone, city, district, address, is_default
     FROM addresses
     WHERE user_id = ?
-    ORDER BY created_at DESC
+    ORDER BY is_default DESC, created_at DESC
 ");
 $stmt->bind_param('i', $userId);
 $stmt->execute();

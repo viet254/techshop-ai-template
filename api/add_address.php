@@ -39,9 +39,10 @@ if ($city !== '') {
     $fullAddress .= ', ' . $city;
 }
 
+// Mặc định địa chỉ mới không phải mặc định (user tự chọn sau)
 $stmt = $conn->prepare("
-    INSERT INTO addresses (user_id, recipient_name, email, phone, city, district, address)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO addresses (user_id, recipient_name, email, phone, city, district, address, is_default)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 0)
 ");
 $stmt->bind_param(
     'issssss',

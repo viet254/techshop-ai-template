@@ -14,8 +14,11 @@ if ($orderId <= 0) {
     exit;
 }
 ?>
-<main class="main-content">
-    <h2>Chi tiết đơn hàng #<?php echo htmlspecialchars($orderId); ?></h2>
+<main class="main-content order-detail-page">
+    <div class="order-detail-header">
+        <a href="/orders.php" class="order-back-link">← Quay lại đơn hàng</a>
+        <h2>Chi tiết đơn hàng #<?php echo htmlspecialchars($orderId); ?></h2>
+    </div>
     <div id="order-info">
         <!-- Thông tin đơn hàng sẽ được tải bằng JS -->
     </div>
@@ -97,10 +100,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         tbody.innerHTML = '';
         let total = 0;
         items.forEach(item => {
+            const imgHtml = item.image 
+                ? `<div class="order-item-thumb"><img src="assets/images/${item.image}" alt="${item.name}"></div>`
+                : '';
             const row = document.createElement('tr');
             const subtotal = item.price * item.quantity;
             total += subtotal;
-            row.innerHTML = `<td>${item.name}</td><td>${Number(item.price).toLocaleString()}₫</td><td>${item.quantity}</td><td>${Number(subtotal).toLocaleString()}₫</td>`;
+            row.innerHTML = `
+                <td class="order-item-product-cell">
+                    <div class="order-item-product">
+                        ${imgHtml}
+                        <div class="order-item-text">
+                            <p class="order-item-name">${item.name}</p>
+                        </div>
+                    </div>
+                </td>
+                <td>${Number(item.price).toLocaleString()}₫</td>
+                <td>${item.quantity}</td>
+                <td>${Number(subtotal).toLocaleString()}₫</td>
+            `;
             tbody.appendChild(row);
         });
         // Không cần hiển thị tổng ở đây vì đã hiển thị trong info

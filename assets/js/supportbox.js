@@ -197,12 +197,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 credentials: 'include'
             });
             if (!res.ok) {
-                renderSessionError('Không thể tải lịch sử (HTTP ' + res.status + ')');
+                // Kiểm tra nếu là lỗi 401 (Unauthorized) - chưa đăng nhập
+                if (res.status === 401) {
+                    renderSessionError('Vui lòng đăng nhập để xem lịch sử chat', true);
+                } else {
+                    renderSessionError('Không thể tải lịch sử (HTTP ' + res.status + ')');
+                }
                 return;
             }
             const data = await res.json();
             if (!data.success) {
-                renderSessionError(data.message || 'Không thể tải lịch sử');
+                // Kiểm tra nếu message có chứa "đăng nhập" thì hiển thị nút đăng nhập
+                const isLoginRequired = data.message && (
+                    data.message.toLowerCase().includes('đăng nhập') ||
+                    data.message.toLowerCase().includes('login')
+                );
+                renderSessionError(data.message || 'Không thể tải lịch sử', isLoginRequired);
                 return;
             }
             sessions = data.sessions || [];
@@ -223,8 +233,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderSessionError(text) {
-        sessionList.innerHTML = `<div class="chatbox-session-empty">${text}</div>`;
+    function renderSessionError(text, isUnauthorized = false) {
+        if (isUnauthorized) {
+            // Hiển thị nút đăng nhập khi chưa đăng nhập
+            sessionList.innerHTML = `
+                <div class="chatbox-session-empty" style="text-align: center; padding: 20px;">
+                    <p style="margin-bottom: 15px; color: #666;">${text}</p>
+                    <button id="chatbox-login-btn" style="
+                        padding: 10px 20px;
+                        background: #007bff;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        transition: background 0.2s;
+                    ">Đăng nhập</button>
+                </div>
+            `;
+            // Thêm event listener cho nút đăng nhập
+            const loginBtn = document.getElementById('chatbox-login-btn');
+            if (loginBtn) {
+                loginBtn.addEventListener('click', () => {
+                    window.location.href = '/login.php';
+                });
+                loginBtn.addEventListener('mouseenter', () => {
+                    loginBtn.style.background = '#0056b3';
+                });
+                loginBtn.addEventListener('mouseleave', () => {
+                    loginBtn.style.background = '#007bff';
+                });
+            }
+        } else {
+            sessionList.innerHTML = `<div class="chatbox-session-empty">${text}</div>`;
+        }
     }
 
     function renderSessions() {
@@ -234,6 +276,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         sessionList.innerHTML = '';
+        
+        // Thêm nút xóa tất cả cuộc trò chuyện cũ
+        const deleteOldBtn = document.createElement('button');
+        deleteOldBtn.className = 'chatbox-delete-old-btn';
+        deleteOldBtn.textContent = '🗑️ Xóa tất cả cuộc trò chuyện cũ (>30 ngày)';
+        deleteOldBtn.style.cssText = 'width: 100%; padding: 8px; margin-bottom: 8px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; cursor: pointer; color: #495057; font-size: 13px; transition: background 0.2s;';
+        deleteOldBtn.addEventListener('click', deleteOldSessions);
+        deleteOldBtn.addEventListener('mouseenter', () => {
+            deleteOldBtn.style.background = '#e9ecef';
+        });
+        deleteOldBtn.addEventListener('mouseleave', () => {
+            deleteOldBtn.style.background = '#f8f9fa';
+        });
+        sessionList.appendChild(deleteOldBtn);
+        
         sessions.forEach(sess => {
             const item = document.createElement('div');
             item.className = 'chatbox-session-item';
@@ -241,6 +298,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (sess.id === currentSessionId) {
                 item.classList.add('active');
             }
+            
+            const contentWrapper = document.createElement('div');
+            contentWrapper.style.display = 'flex';
+            contentWrapper.style.justifyContent = 'space-between';
+            contentWrapper.style.alignItems = 'center';
+            contentWrapper.style.width = '100%';
+            
+            const textWrapper = document.createElement('div');
+            textWrapper.style.flex = '1';
+            textWrapper.style.minWidth = '0';
+            
             const title = document.createElement('div');
             title.className = 'chatbox-session-title';
             title.textContent = sess.title || `Cuộc trò chuyện #${sess.id}`;
@@ -249,9 +317,33 @@ document.addEventListener('DOMContentLoaded', () => {
             meta.className = 'chatbox-session-meta';
             meta.textContent = formatDate(sess.updated_at || sess.created_at);
 
-            item.appendChild(title);
-            item.appendChild(meta);
-            item.addEventListener('click', () => selectSession(sess.id));
+            textWrapper.appendChild(title);
+            textWrapper.appendChild(meta);
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'chatbox-session-delete';
+            deleteBtn.innerHTML = '×';
+            deleteBtn.title = 'Xóa cuộc trò chuyện';
+            deleteBtn.style.cssText = 'background: transparent; border: none; color: #999; cursor: pointer; font-size: 24px; line-height: 1; padding: 0 8px; margin-left: 8px; flex-shrink: 0; transition: color 0.2s;';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteSession(sess.id);
+            });
+            deleteBtn.addEventListener('mouseenter', () => {
+                deleteBtn.style.color = '#e74c3c';
+            });
+            deleteBtn.addEventListener('mouseleave', () => {
+                deleteBtn.style.color = '#999';
+            });
+            
+            contentWrapper.appendChild(textWrapper);
+            contentWrapper.appendChild(deleteBtn);
+            item.appendChild(contentWrapper);
+            item.addEventListener('click', (e) => {
+                if (e.target !== deleteBtn && !deleteBtn.contains(e.target)) {
+                    selectSession(sess.id);
+                }
+            });
             sessionList.appendChild(item);
         });
     }
@@ -309,6 +401,93 @@ document.addEventListener('DOMContentLoaded', () => {
         const d = new Date(str);
         if (Number.isNaN(d.getTime())) return str;
         return d.toLocaleString('vi-VN', { hour12: false });
+    }
+
+    // ====== XÓA CUỘC TRÒ CHUYỆN ======
+    async function deleteSession(sessionId) {
+        if (!confirm('Bạn có chắc chắn muốn xóa cuộc trò chuyện này không?')) {
+            return;
+        }
+
+        try {
+            const res = await fetch('api/ai_support_history.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    action: 'delete',
+                    session_id: sessionId
+                })
+            });
+
+            if (!res.ok) {
+                alert('Không thể xóa cuộc trò chuyện (HTTP ' + res.status + ')');
+                return;
+            }
+
+            const data = await res.json();
+            if (!data.success) {
+                alert(data.message || 'Không thể xóa cuộc trò chuyện');
+                return;
+            }
+
+            // Nếu đang xem session bị xóa thì xóa UI và reset
+            if (sessionId === currentSessionId) {
+                clearMessagesUI();
+                currentSessionId = 0;
+                setActiveSession(-1);
+                appendMessage('bot', 'Đã xóa cuộc trò chuyện. Bạn muốn bắt đầu cuộc trò chuyện mới?');
+            }
+
+            // Reload danh sách sessions
+            loadSessions(false, currentSessionId);
+        } catch (err) {
+            console.error(err);
+            alert('Không thể kết nối tới máy chủ để xóa cuộc trò chuyện');
+        }
+    }
+
+    // ====== XÓA TẤT CẢ CUỘC TRÒ CHUYỆN CŨ ======
+    async function deleteOldSessions() {
+        if (!confirm('Bạn có chắc chắn muốn xóa tất cả cuộc trò chuyện cũ hơn 30 ngày không?')) {
+            return;
+        }
+
+        try {
+            const res = await fetch('api/ai_support_history.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    action: 'delete_old',
+                    days: 30
+                })
+            });
+
+            if (!res.ok) {
+                alert('Không thể xóa cuộc trò chuyện cũ (HTTP ' + res.status + ')');
+                return;
+            }
+
+            const data = await res.json();
+            if (!data.success) {
+                alert(data.message || 'Không thể xóa cuộc trò chuyện cũ');
+                return;
+            }
+
+            const deletedCount = data.deleted_count || 0;
+            if (deletedCount > 0) {
+                alert(`Đã xóa ${deletedCount} cuộc trò chuyện cũ thành công.`);
+            } else {
+                alert('Không có cuộc trò chuyện cũ nào để xóa.');
+            }
+
+            // Reload danh sách sessions
+            loadSessions(false, currentSessionId);
+        } catch (err) {
+            console.error(err);
+            alert('Không thể kết nối tới máy chủ để xóa cuộc trò chuyện cũ');
+        }
     }
 
     // Tải danh sách cuộc trò chuyện khi mở trang

@@ -37,8 +37,8 @@ if (!$isAdmin && (int)$order['user_id'] !== $userId) {
     echo json_encode(null);
     exit;
 }
-// Lấy danh sách sản phẩm trong đơn
-$stmtItems = $conn->prepare("SELECT oi.product_id, oi.quantity, p.name, p.price FROM order_items oi JOIN products p ON oi.product_id = p.id WHERE oi.order_id = ?");
+// Lấy danh sách sản phẩm trong đơn (kèm ảnh sản phẩm)
+$stmtItems = $conn->prepare("SELECT oi.product_id, oi.quantity, p.name, p.price, p.image FROM order_items oi JOIN products p ON oi.product_id = p.id WHERE oi.order_id = ?");
 $stmtItems->bind_param('i', $orderId);
 $stmtItems->execute();
 $resItems = $stmtItems->get_result();
@@ -48,7 +48,8 @@ while ($row = $resItems->fetch_assoc()) {
         'product_id' => (int)$row['product_id'],
         'name' => $row['name'],
         'price' => (float)$row['price'],
-        'quantity' => (int)$row['quantity']
+        'quantity' => (int)$row['quantity'],
+        'image' => $row['image']
     ];
 }
 // Lấy thông tin địa chỉ

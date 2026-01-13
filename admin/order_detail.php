@@ -104,7 +104,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             const subtotal = item.price * item.quantity;
             total += subtotal;
             const row = document.createElement('tr');
-            row.innerHTML = `<td>${item.name}</td><td>${Number(item.price).toLocaleString()}₫</td><td>${item.quantity}</td><td>${Number(subtotal).toLocaleString()}₫</td>`;
+            const imgHtml = item.image
+                ? `<div class="order-item-thumb"><img src="/assets/images/${item.image}" alt="${item.name}"></div>`
+                : '';
+            row.innerHTML = `
+                <td class="order-item-product-cell">
+                    <div class="order-item-product">
+                        ${imgHtml}
+                        <div class="order-item-text">
+                            <p class="order-item-name">${item.name}</p>
+                        </div>
+                    </div>
+                </td>
+                <td>${Number(item.price).toLocaleString()}₫</td>
+                <td>${item.quantity}</td>
+                <td>${Number(subtotal).toLocaleString()}₫</td>
+            `;
             tbody.appendChild(row);
         });
         document.getElementById('order-total').textContent = '';

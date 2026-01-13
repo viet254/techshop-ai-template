@@ -56,9 +56,14 @@ if (isset($_GET['msg']) && $_GET['msg'] === 'updated') {
                                 <?= htmlspecialchars($u['role']) ?>
                             </span>
                         </td>
-                        <td style="min-width:220px;">
+                        <td class="admin-user-actions">
                             <?php if ($u['id'] == ($_SESSION['user']['id'] ?? 0)): ?>
-                                <span class="text-muted">(Bạn)</span>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="text-muted">(Bạn)</span>
+                                    <a href="/admin/user_detail.php?id=<?= $u['id'] ?>" class="btn btn-light btn-sm d-inline-flex align-items-center">
+                                        <span class="icon">ℹ️</span> Xem
+                                    </a>
+                                </div>
                             <?php else: ?>
                                 <form action="update_user_role.php" method="post" class="role-form mb-2 d-flex align-items-center gap-2">
                                     <input type="hidden" name="id" value="<?= $u['id'] ?>" />
@@ -66,11 +71,19 @@ if (isset($_GET['msg']) && $_GET['msg'] === 'updated') {
                                         <option value="user" <?= $u['role'] === 'user' ? 'selected' : '' ?>>User</option>
                                         <option value="admin" <?= $u['role'] === 'admin' ? 'selected' : '' ?>>Admin</option>
                                     </select>
-                                    <button type="submit" class="btn-edit btn btn-sm" title="Cập nhật quyền"><span class="icon">🔄</span> Lưu</button>
+                                    <button type="submit" class="btn-edit btn btn-sm" title="Cập nhật quyền">
+                                        <span class="icon">🔄</span> Lưu
+                                    </button>
                                 </form>
-                                <a href="/admin/edit_user.php?id=<?= $u['id'] ?>" class="btn-edit btn btn-sm d-inline-flex align-items-center mb-1"><span class="icon">✏️</span> Sửa</a>
+                                <div class="admin-user-actions-row">
+                                    <a href="/admin/edit_user.php?id=<?= $u['id'] ?>" class="btn-edit btn btn-sm d-inline-flex align-items-center">
+                                        <span class="icon">✏️</span> Sửa
+                                    </a>
+                                    <a href="/admin/user_detail.php?id=<?= $u['id'] ?>" class="btn btn-light btn-sm d-inline-flex align-items-center">
+                                        <span class="icon">ℹ️</span> Xem
+                                    </a>
+                                </div>
                             <?php endif; ?>
-                            <a href="/admin/user_detail.php?id=<?= $u['id'] ?>" class="btn btn-light btn-sm d-inline-flex align-items-center"><span class="icon">ℹ️</span> Xem</a>
                         </td>
                     </tr>
                     <?php endforeach; ?>

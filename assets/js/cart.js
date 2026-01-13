@@ -1,6 +1,58 @@
 // JS for cart page
 // Biến toàn cục lưu phương thức thanh toán được chọn
 let selectedPaymentMethod = 'cod';
+// Biến toàn cục lưu địa chỉ giao hàng đang chọn (dùng cho checkout)
+let selectedAddressId = 0;
+// Cache danh sách địa chỉ cho modal chọn địa chỉ
+let cartAddresses = [];
+// Bản đồ tỉnh/thành -> quận/huyện dùng cho form thêm địa chỉ trong giỏ hàng (giống profile)
+const addressDistrictsByProvince = {
+    "Ha Noi": [
+        "Ba Đình", "Hoàn Kiếm", "Hai Bà Trưng", "Đống Đa", "Tây Hồ", "Cầu Giấy",
+        "Thanh Xuân", "Long Biên", "Nam Từ Liêm", "Bắc Từ Liêm", "Hà Đông"
+    ],
+    "Bac Ninh": [
+        "TP Bắc Ninh", "Từ Sơn", "Yên Phong", "Tiên Du", "Thuận Thành",
+        "Gia Bình", "Quế Võ", "Lương Tài"
+    ],
+    "Hai Phong": [
+        "Hồng Bàng", "Ngô Quyền", "Lê Chân", "Kiến An", "Hải An",
+        "Đồ Sơn", "An Dương", "An Lão", "Kiến Thụy"
+    ],
+    "Quang Ninh": [
+        "Hạ Long", "Cẩm Phả", "Uông Bí", "Móng Cái", "Quảng Yên",
+        "Đông Triều", "Vân Đồn", "Tiên Yên"
+    ],
+    "Bac Giang": [
+        "TP Bắc Giang", "Yên Thế", "Tân Yên", "Lục Nam", "Lục Ngạn",
+        "Sơn Động", "Yên Dũng", "Việt Yên", "Lạng Giang", "Hiệp Hòa"
+    ],
+    "Thai Nguyen": [
+        "TP Thái Nguyên", "Sông Công", "Định Hóa", "Phú Lương",
+        "Đồng Hỷ", "Võ Nhai", "Phú Bình"
+    ],
+    "Vinh Phuc": [
+        "TP Vĩnh Yên", "Phúc Yên", "Yên Lạc", "Vĩnh Tường",
+        "Tam Dương", "Tam Đảo", "Sông Lô", "Bình Xuyên"
+    ],
+    "Nam Dinh": [
+        "TP Nam Định", "Mỹ Lộc", "Vụ Bản", "Ý Yên", "Trực Ninh",
+        "Xuân Trường", "Giao Thủy", "Nghĩa Hưng", "Nam Trực", "Hải Hậu"
+    ],
+    "Ninh Binh": [
+        "TP Ninh Bình", "Tam Điệp", "Gia Viễn", "Hoa Lư",
+        "Yên Khánh", "Yên Mô", "Kim Sơn", "Nho Quan"
+    ],
+    "Ha Nam": [
+        "TP Phủ Lý", "Duy Tiên", "Lý Nhân", "Kim Bảng",
+        "Thanh Liêm", "Bình Lục"
+    ],
+    "Hai Duong": [
+        "TP Hải Dương", "Chí Linh", "Nam Sách", "Kinh Môn",
+        "Thanh Hà", "Cẩm Giàng", "Gia Lộc", "Tứ Kỳ",
+        "Ninh Giang", "Thanh Miện"
+    ]
+};
 
 const currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 let currentCartSubtotal = 0;
@@ -18,14 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (checkoutBtn) {
         checkoutBtn.addEventListener('click', async () => {
             // Kiểm tra địa chỉ trước khi thanh toán
-            let addressId = 0;
-            const radioAddr = document.querySelector('input[name="address-option"]:checked');
-            if (radioAddr) {
-                addressId = parseInt(radioAddr.value);
-            } else {
-                const select = document.getElementById('select-address');
-                addressId = select ? parseInt(select.value) : 0;
-            }
+            let addressId = selectedAddressId || 0;
             
             // Nếu chưa có địa chỉ, chuyển đến trang profile để nhập địa chỉ
             if (addressId <= 0) {
@@ -162,6 +207,31 @@ async function loadCart() {
     }
 }
 
+// Bind sự kiện đổi Tỉnh/Thành phố -> load Quận/Huyện cho form địa chỉ trong giỏ hàng
+function bindCartCityDistrictSelects(rootEl = document) {
+    const citySelect = rootEl.querySelector('#addr-city');
+    const districtSelect = rootEl.querySelector('#addr-district');
+    if (!citySelect || !districtSelect) return;
+
+    // Tránh bind lặp nhiều lần khi mở modal nhiều lần
+    if (citySelect.dataset.bound === '1') return;
+    citySelect.dataset.bound = '1';
+
+    const renderDistricts = () => {
+        const val = citySelect.value;
+        districtSelect.innerHTML = '<option value="">--- Chọn quận/huyện ---</option>';
+        const districts = addressDistrictsByProvince[val] || [];
+        districts.forEach((d) => {
+            const opt = document.createElement('option');
+            opt.value = d;
+            opt.textContent = d;
+            districtSelect.appendChild(opt);
+        });
+    };
+
+    citySelect.addEventListener('change', renderDistricts);
+}
+
 async function updateQuantity(input) {
     const id = input.dataset.id;
     const quantity = parseInt(input.value);
@@ -224,7 +294,7 @@ async function removeItem(productId, saved) {
 let appliedVoucherCode = '';
 let discountAmount = 0;
 
-// Load danh sách địa chỉ và hiển thị select
+// Load danh sách địa chỉ và hiển thị địa chỉ đang chọn + modal "Thay đổi"
 async function loadAddressOptions() {
     const container = document.getElementById('address-select-container');
     if (!container) return;
@@ -232,42 +302,235 @@ async function loadAddressOptions() {
     try {
         const res = await fetch('/api/get_addresses.php');
         const addresses = await res.json();
+        cartAddresses = Array.isArray(addresses) ? addresses : [];
         if (!Array.isArray(addresses) || addresses.length === 0) {
             container.innerHTML = '<p style="color: #e53935; font-weight: 500;">⚠️ Bạn chưa có địa chỉ giao hàng. <a href="/profile.php" style="color: #1a73e8; text-decoration: underline;">Vui lòng thêm địa chỉ tại đây</a> trước khi thanh toán.</p>';
             return;
         }
-        // Tạo tiêu đề
-        const title = document.createElement('p');
-        title.textContent = 'Chọn địa chỉ giao hàng:';
-        title.style.marginBottom = '8px';
-        container.appendChild(title);
-        // Tạo vùng chứa các tùy chọn địa chỉ
-        const optionsDiv = document.createElement('div');
-        optionsDiv.className = 'address-options';
-        addresses.forEach((addr, idx) => {
-            const labelEl = document.createElement('label');
-            labelEl.className = 'address-option';
-            // Radio input
-            const radio = document.createElement('input');
-            radio.type = 'radio';
-            radio.name = 'address-option';
-            radio.value = addr.id;
-            // Chọn mặc định địa chỉ đầu tiên
-            if (idx === 0) radio.checked = true;
-            radio.addEventListener('change', () => {
-                // Nothing extra needed here; selected value will be read on checkout
-            });
-            // Nội dung hiển thị địa chỉ
-            const card = document.createElement('div');
-            card.className = 'address-card';
-            card.innerHTML = `<strong>${addr.recipient_name}</strong><br><span>${addr.address}</span>`;
-            labelEl.appendChild(radio);
-            labelEl.appendChild(card);
-            optionsDiv.appendChild(labelEl);
-        });
-        container.appendChild(optionsDiv);
+        // Nếu đã có selectedAddressId (ví dụ vừa thêm địa chỉ mới), ưu tiên dùng nó
+        let currentAddr = null;
+        if (selectedAddressId) {
+            currentAddr = addresses.find(a => Number(a.id) === Number(selectedAddressId)) || null;
+        }
+        // Nếu chưa có hoặc không tìm thấy thì dùng địa chỉ mặc định, hoặc địa chỉ đầu tiên
+        if (!currentAddr) {
+            currentAddr = addresses.find(a => Number(a.is_default) === 1) || addresses[0];
+        }
+        selectedAddressId = currentAddr ? Number(currentAddr.id) : 0;
+
+        renderCartAddressSummary(currentAddr);
+
+        // Gắn sự kiện mở modal "Thay đổi"
+        const changeBtn = document.getElementById('cart-change-address-btn');
+        if (changeBtn) {
+            changeBtn.addEventListener('click', openCartAddressModal);
+        }
     } catch (err) {
         container.innerHTML = '<p>Không thể tải địa chỉ.</p>';
+    }
+}
+
+function renderCartAddressSummary(addr) {
+    const container = document.getElementById('address-select-container');
+    if (!container || !addr) return;
+    const phoneText = addr.phone ? `(+84) ${addr.phone}` : '';
+    const isDefault = Number(addr.is_default) === 1;
+    container.innerHTML = `
+        <div class="cart-address-summary">
+            <div class="cart-address-label">Địa Chỉ Nhận Hàng</div>
+            <div class="cart-address-main">
+                <strong>${addr.recipient_name}</strong> ${phoneText ? `<span>${phoneText}</span>` : ''} -
+                <span>${addr.address}</span>
+                ${isDefault ? '<span class="address-default-badge" style="margin-left:6px;">Mặc định</span>' : ''}
+            </div>
+            <div class="cart-address-change">
+                <button type="button" id="cart-change-address-btn" class="btn-link">Thay đổi</button>
+            </div>
+        </div>
+    `;
+
+    // Gắn lại sự kiện "Thay đổi" mỗi lần render tóm tắt
+    const changeBtn = document.getElementById('cart-change-address-btn');
+    if (changeBtn) {
+        changeBtn.addEventListener('click', openCartAddressModal);
+    }
+}
+
+async function openCartAddressModal() {
+    const overlay = document.getElementById('cart-address-modal-overlay');
+    const listEl = document.getElementById('cart-address-list');
+    const form = document.getElementById('cart-address-form');
+    if (!overlay || !listEl) return;
+
+    // Refetch địa chỉ mới nhất mỗi lần mở modal
+    try {
+        const res = await fetch('/api/get_addresses.php');
+        const addresses = await res.json();
+        cartAddresses = Array.isArray(addresses) ? addresses : [];
+    } catch (err) {
+        console.error(err);
+        cartAddresses = [];
+    }
+
+    // Đảm bảo modal luôn bắt đầu ở chế độ danh sách
+    const titleEl = document.querySelector('.cart-address-modal .address-modal-header h4');
+    const confirmBtn = document.getElementById('cart-address-modal-confirm');
+    const toggleAddBtn = document.getElementById('cart-address-add-toggle');
+    let isAddMode = false;
+
+    if (titleEl) titleEl.textContent = 'Địa Chỉ Của Tôi';
+    if (confirmBtn) confirmBtn.textContent = 'Xác nhận';
+    if (toggleAddBtn) toggleAddBtn.textContent = '+ Thêm Địa Chỉ Mới';
+    if (form) {
+        form.classList.add('hidden');
+        form.reset();
+    }
+
+    // Đảm bảo danh sách luôn hiển thị lại (có thể đã bị ẩn ở lần trước trong chế độ thêm mới)
+    listEl.style.display = '';
+    listEl.innerHTML = '';
+    if (!Array.isArray(cartAddresses) || cartAddresses.length === 0) {
+        listEl.innerHTML = '<p>Chưa có địa chỉ giao hàng.</p>';
+    } else {
+        cartAddresses.forEach(addr => {
+            const row = document.createElement('div');
+            row.className = 'address-item';
+            row.dataset.id = addr.id;
+            row.dataset.recipient = addr.recipient_name || '';
+            row.dataset.phone = addr.phone || '';
+            row.dataset.address = addr.address || '';
+            row.innerHTML = `
+                <label class="address-row">
+                    <div style="margin-right:10px;">
+                        <input type="radio" name="cart-address-radio" value="${addr.id}" ${Number(addr.id) === selectedAddressId ? 'checked' : ''} />
+                    </div>
+                    <div class="address-main">
+                        <p class="address-recipient">
+                            <strong>${addr.recipient_name}</strong>
+                            ${addr.phone ? `<span class="address-phone">(+84) ${addr.phone}</span>` : ''}
+                        </p>
+                        <p class="address-text">${addr.address}</p>
+                    </div>
+                    <div class="address-actions">
+                        ${Number(addr.is_default) === 1 ? '<span class="address-default-badge">Mặc định</span>' : ''}
+                    </div>
+                </label>
+            `;
+            listEl.appendChild(row);
+        });
+    }
+
+    overlay.classList.remove('hidden');
+
+    const closeBtn = document.getElementById('cart-address-modal-close');
+    const cancelBtn = document.getElementById('cart-address-modal-cancel');
+
+    function switchToListMode() {
+        isAddMode = false;
+        if (titleEl) titleEl.textContent = 'Địa Chỉ Của Tôi';
+        if (listEl) listEl.style.display = '';
+        if (toggleAddBtn) toggleAddBtn.textContent = '+ Thêm Địa Chỉ Mới';
+        if (form) {
+            form.classList.add('hidden');
+            form.reset();
+        }
+        if (confirmBtn) confirmBtn.textContent = 'Xác nhận';
+    }
+
+    function switchToAddMode() {
+        isAddMode = true;
+        if (titleEl) titleEl.textContent = 'Thêm Địa Chỉ Mới';
+        if (listEl) listEl.style.display = 'none';
+        if (toggleAddBtn) toggleAddBtn.textContent = '← Quay lại danh sách';
+        if (form) form.classList.remove('hidden');
+        if (confirmBtn) confirmBtn.textContent = 'Lưu';
+    }
+
+    function closeModal() {
+        overlay.classList.add('hidden');
+    }
+
+    if (closeBtn) closeBtn.onclick = closeModal;
+    if (cancelBtn) {
+        cancelBtn.onclick = () => {
+            if (isAddMode) {
+                // Từ màn hình thêm địa chỉ quay lại danh sách
+                switchToListMode();
+            } else {
+                closeModal();
+            }
+        };
+    }
+    overlay.onclick = (e) => {
+        if (e.target === overlay) closeModal();
+    };
+
+    if (toggleAddBtn && form) {
+        toggleAddBtn.onclick = () => {
+            if (isAddMode) {
+                switchToListMode();
+            } else {
+                switchToAddMode();
+                // Bind tỉnh/thành -> quận/huyện cho form thêm địa chỉ trong modal
+                bindCartCityDistrictSelects(overlay);
+            }
+        };
+    }
+
+    if (confirmBtn) {
+        confirmBtn.onclick = async () => {
+            if (isAddMode) {
+                // Lưu địa chỉ mới (dùng cùng ID với form Sổ địa chỉ ở trang cá nhân)
+                const recipient = overlay.querySelector('#addr-recipient')?.value.trim() || '';
+                const email = overlay.querySelector('#addr-email')?.value.trim() || '';
+                const phone = overlay.querySelector('#addr-phone')?.value.trim() || '';
+                const fullAddress = overlay.querySelector('#addr-address')?.value.trim() || '';
+                const city = overlay.querySelector('#addr-city')?.value.trim() || '';
+                const district = overlay.querySelector('#addr-district')?.value.trim() || '';
+                if (!recipient || !email || !fullAddress || !city) {
+                    showNotification('Vui lòng nhập đầy đủ tên, email, địa chỉ và tỉnh/thành.', 'error');
+                    return;
+                }
+                try {
+                    const res = await fetch('/api/add_address.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            recipient_name: recipient,
+                            email,
+                            phone,
+                            city,
+                            district,
+                            address: fullAddress
+                        })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        showNotification('Đã thêm địa chỉ mới.', 'success');
+                        selectedAddressId = Number(data.id) || selectedAddressId;
+                        closeModal();
+                        loadAddressOptions();
+                    } else {
+                        showNotification(data.error || 'Không thể thêm địa chỉ', 'error');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showNotification('Có lỗi xảy ra khi thêm địa chỉ.', 'error');
+                }
+            } else {
+                // Xác nhận chọn địa chỉ hiện có
+                const checked = document.querySelector('input[name="cart-address-radio"]:checked');
+                if (checked) {
+                    const id = Number(checked.value);
+                    const addr = cartAddresses.find(a => Number(a.id) === id);
+                    if (addr) {
+                        selectedAddressId = id;
+                        renderCartAddressSummary(addr);
+                    }
+                }
+                closeModal();
+            }
+        };
     }
 }
 

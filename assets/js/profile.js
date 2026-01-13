@@ -3,47 +3,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadProfile();
     bindProfileNav();
     bindProfileForms();
+    setupAddressModal();
     loadAddresses();
-
-    const addressForm = document.getElementById('address-form');
-    if (addressForm) {
-        addressForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const recipientName = document.getElementById('addr-recipient').value.trim();
-            const email         = document.getElementById('addr-email').value.trim();
-            const phone         = document.getElementById('addr-phone').value.trim();
-            const city          = document.getElementById('addr-city').value.trim();
-            const district      = document.getElementById('addr-district').value.trim();
-            const address       = document.getElementById('addr-address').value.trim();
-
-            try {
-                const res = await fetch('/api/add_address.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        recipient_name: recipientName,
-                        email,
-                        phone,
-                        city,
-                        district,
-                        address
-                    })
-                });
-                const data = await res.json();
-                if (!res.ok || !data.success) {
-                    showNotification(data.error || 'Không thể thêm địa chỉ', 'error');
-                    return;
-                }
-                showNotification(data.message || 'Đã thêm địa chỉ.', 'success');
-                addressForm.reset();
-                loadAddresses();
-            } catch (err) {
-                console.error(err);
-                showNotification('Có lỗi xảy ra, vui lòng thử lại.', 'error');
-            }
-        });
-    }
 
     const citySelect = document.getElementById('addr-city');
     const districtSelect = document.getElementById('addr-district');
@@ -112,15 +73,24 @@ async function loadProfile() {
             const nameDisplay = document.getElementById('profile-name-display');
             const emailDisplay = document.getElementById('profile-email-display');
             const phoneDisplay = document.getElementById('profile-phone-display');
-            if (nameDisplay) nameDisplay.textContent = user.name || 'Người dùng';
-            if (emailDisplay) emailDisplay.textContent = user.email || 'Chưa có email';
-            if (phoneDisplay) phoneDisplay.textContent = user.phone || 'Chưa cập nhật số điện thoại';
+            const sidebarName = document.getElementById('sidebar-name-display');
             const avatarPreview = document.getElementById('avatar-preview');
-            if (user.avatar) {
-                avatarPreview.src = '/assets/images/avatars/' + user.avatar;
-            } else {
-                avatarPreview.src = '/assets/images/default-avatar.png';
-            }
+            const sidebarAvatar = document.getElementById('sidebar-avatar');
+
+            const displayName = user.name || 'Người dùng';
+            const displayEmail = user.email || 'Chưa có email';
+            const displayPhone = user.phone || 'Chưa cập nhật số điện thoại';
+
+            if (nameDisplay) nameDisplay.textContent = displayName;
+            if (emailDisplay) emailDisplay.textContent = displayEmail;
+            if (phoneDisplay) phoneDisplay.textContent = displayPhone;
+            if (sidebarName) sidebarName.textContent = displayName;
+
+            const avatarSrc = user.avatar
+                ? '/assets/images/avatars/' + user.avatar
+                : '/assets/images/default-avatar.png';
+            if (avatarPreview) avatarPreview.src = avatarSrc;
+            if (sidebarAvatar) sidebarAvatar.src = avatarSrc;
         }
     } catch (err) {
         console.error(err);
@@ -136,6 +106,10 @@ function bindProfileNav() {
         sections.forEach(sec => sec.classList.add('hidden'));
         const target = document.getElementById(id + '-section');
         if (target) target.classList.remove('hidden');
+        // Khi mở tab Đơn mua thì tải danh sách đơn hàng
+        if (id === 'orders') {
+            loadOrders();
+        }
         sectionLinks.forEach(l => {
             const secId = l.getAttribute('data-section');
             l.classList.toggle('active', secId === id);
@@ -286,42 +260,207 @@ async function loadAddresses() {
         }
         const addressStat = document.getElementById('stat-address-count');
         if (addressStat) addressStat.textContent = list.length;
-        list.forEach(addr => {
+        list.forEach((addr) => {
             const div = document.createElement('div');
             div.className = 'address-item';
+            div.dataset.id = addr.id;
+            div.dataset.recipient = addr.recipient_name || '';
+            div.dataset.email = addr.email || '';
+            div.dataset.phone = addr.phone || '';
+            div.dataset.city = addr.city || '';
+            div.dataset.district = addr.district || '';
+            div.dataset.address = addr.address || '';
+
+            const isDefault = Number(addr.is_default) === 1;
+
             div.innerHTML = `
-                <p><strong>${addr.recipient_name}</strong> - ${addr.phone || ''}</p>
-                <p>${addr.address}</p>
-                <button data-id="${addr.id}" class="delete-address">Xóa</button>
+                <div class="address-row">
+                    <div class="address-main">
+                        <p class="address-recipient">
+                            <strong>${addr.recipient_name}</strong>
+                            ${addr.phone ? `<span class="address-phone">(+84) ${addr.phone}</span>` : ''}
+                        </p>
+                        <p class="address-text">${addr.address}</p>
+                    </div>
+                    <div class="address-actions">
+                        ${isDefault ? '<span class="address-default-badge">Mặc định</span>' : ''}
+                        <button class="btn-link btn-edit-address">Cập nhật</button>
+                        <button class="btn-link btn-delete-address">Xóa</button>
+                        ${!isDefault ? '<button class="btn-outline btn-set-default">Thiết lập mặc định</button>' : ''}
+                    </div>
+                </div>
             `;
             container.appendChild(div);
         });
-        document.querySelectorAll('.delete-address').forEach(btn => {
+
+        bindAddressItemEvents();
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+let currentAddressId = null;
+
+function setupAddressModal() {
+    const openBtn = document.getElementById('open-address-modal');
+    const overlay = document.getElementById('address-modal-overlay');
+    const closeBtn = document.getElementById('close-address-modal');
+    const cancelBtn = document.getElementById('cancel-address-modal');
+    const form = document.getElementById('address-form');
+    const titleEl = document.getElementById('address-modal-title');
+
+    if (!overlay || !form) return;
+
+    // Cho phép chỗ khác mở modal qua custom event (dùng cho nút Cập nhật)
+    document.addEventListener('openAddressModal', (e) => {
+        const { mode, addr } = e.detail || {};
+        openModal(mode, addr);
+    });
+
+    function openModal(mode, addr) {
+        overlay.classList.remove('hidden');
+        document.body.classList.add('no-scroll');
+        if (mode === 'edit' && addr) {
+            titleEl.textContent = 'Cập nhật địa chỉ';
+            currentAddressId = addr.id;
+            document.getElementById('addr-recipient').value = addr.recipient || '';
+            document.getElementById('addr-email').value = addr.email || '';
+            document.getElementById('addr-phone').value = addr.phone || '';
+            document.getElementById('addr-city').value = addr.city || '';
+            const event = new Event('change');
+            document.getElementById('addr-city').dispatchEvent(event);
+            document.getElementById('addr-district').value = addr.district || '';
+            document.getElementById('addr-address').value = addr.address || '';
+        } else {
+            titleEl.textContent = 'Thêm địa chỉ mới';
+            currentAddressId = null;
+            form.reset();
+        }
+    }
+
+    function closeModal() {
+        overlay.classList.add('hidden');
+        document.body.classList.remove('no-scroll');
+        currentAddressId = null;
+    }
+
+    if (openBtn) {
+        openBtn.addEventListener('click', () => openModal('add'));
+    }
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal();
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            recipient_name: document.getElementById('addr-recipient').value.trim(),
+            email: document.getElementById('addr-email').value.trim(),
+            phone: document.getElementById('addr-phone').value.trim(),
+            city: document.getElementById('addr-city').value.trim(),
+            district: document.getElementById('addr-district').value.trim(),
+            address: document.getElementById('addr-address').value.trim()
+        };
+
+        const url = currentAddressId ? '/api/update_address.php' : '/api/add_address.php';
+        if (currentAddressId) {
+            payload.id = currentAddressId;
+        }
+
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                showNotification(data.error || 'Không thể lưu địa chỉ', 'error');
+                return;
+            }
+            showNotification(data.message || 'Đã lưu địa chỉ.', 'success');
+            closeModal();
+            loadAddresses();
+        } catch (err) {
+            console.error(err);
+            showNotification('Có lỗi xảy ra, vui lòng thử lại.', 'error');
+        }
+    });
+}
+
+function bindAddressItemEvents() {
+    document.querySelectorAll('.btn-delete-address').forEach(btn => {
             btn.addEventListener('click', async () => {
-                const id = btn.getAttribute('data-id');
+            const wrapper = btn.closest('.address-item');
+            const id = wrapper?.dataset.id;
+            if (!id) return;
                 if (!confirm('Bạn có chắc muốn xóa địa chỉ này?')) return;
                 try {
                     const res = await fetch('/api/delete_address.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: id })
+                    body: JSON.stringify({ id: Number(id) })
                     });
                     const data = await res.json();
-                    if (data.success) {
-                        // Show success notification and reload list
+                if (res.ok && data.success) {
                         showNotification(data.message || 'Đã xóa địa chỉ.', 'success');
                         loadAddresses();
                     } else {
                         showNotification(data.error || 'Không thể xóa địa chỉ', 'error');
                     }
                 } catch (err) {
+                console.error(err);
                     showNotification('Lỗi xóa địa chỉ', 'error');
                 }
             });
         });
+
+    document.querySelectorAll('.btn-edit-address').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const wrapper = btn.closest('.address-item');
+            if (!wrapper) return;
+            const addr = {
+                id: wrapper.dataset.id,
+                recipient: wrapper.dataset.recipient,
+                email: wrapper.dataset.email,
+                phone: wrapper.dataset.phone,
+                city: wrapper.dataset.city,
+                district: wrapper.dataset.district,
+                address: wrapper.dataset.address
+            };
+            const openEvent = new CustomEvent('openAddressModal', { detail: { mode: 'edit', addr } });
+            document.dispatchEvent(openEvent);
+        });
+    });
+
+    // Thiết lập mặc định chỉ thay đổi thứ tự hiển thị trên giao diện
+    document.querySelectorAll('.btn-set-default').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const wrapper = btn.closest('.address-item');
+            const id = wrapper?.dataset.id;
+            if (!wrapper || !id) return;
+            try {
+                const res = await fetch('/api/set_default_address.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: Number(id) })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    showNotification(data.message || 'Đã đặt địa chỉ mặc định.', 'success');
+                    // Reload lại danh sách để cập nhật badge/nút theo dữ liệu mới
+                    loadAddresses();
+                } else {
+                    showNotification(data.error || 'Không thể đặt địa chỉ mặc định', 'error');
+                }
     } catch (err) {
         console.error(err);
+                showNotification('Lỗi khi đặt địa chỉ mặc định', 'error');
     }
+        });
+    });
 }
 
 async function loadVouchers() {
@@ -369,28 +508,9 @@ async function updateOrderStat() {
 }
 
 async function loadOrders() {
-    try {
-        const res = await fetch('/api/get_order_history.php');
-        const orders = await res.json();
-        const container = document.getElementById('orders');
-        container.innerHTML = '';
-        if (orders.length === 0) {
-            container.innerHTML = '<p>Bạn chưa có đơn hàng nào.</p>';
-            return;
-        }
-        orders.forEach(order => {
-            const div = document.createElement('div');
-            div.className = 'order-item';
-            // Liên kết tới trang chi tiết đơn hàng
-            const link = `/order_detail.php?id=${order.id}`;
-            div.innerHTML = `
-                <p>Mã đơn: <a href="${link}">#${order.id}</a> | Tổng: ${Number(order.final_total).toLocaleString()}₫ | Trạng thái: ${order.status}</p>
-            `;
-            container.appendChild(div);
-        });
-    } catch (err) {
-        console.error(err);
-    }
+
+    const container = document.getElementById('orders');
+    if (!container) return;
 }
 
 // (Duplicate loadAddresses removed to avoid overriding earlier definition)

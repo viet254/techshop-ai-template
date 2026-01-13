@@ -24,10 +24,12 @@ $sessionId     = isset($input['session_id']) ? (int)$input['session_id'] : 0;
 
 /**
  * Lưu 1 tin nhắn vào bảng ai_chat_messages
+ * Chỉ lưu nếu user đã đăng nhập (userId > 0)
  */
 function ai_save_message(int $sessionId, int $userId, string $sender, string $message): void
 {
-    if ($sessionId <= 0 || $message === '') {
+    // Chỉ lưu lịch sử nếu user đã đăng nhập
+    if ($sessionId <= 0 || $message === '' || $userId <= 0) {
         return;
     }
     global $conn;
@@ -43,7 +45,7 @@ function ai_save_message(int $sessionId, int $userId, string $sender, string $me
 }
 
 /**
- * Gửi JSON response và đồng thời lưu lịch sử chat (user + bot) nếu có session
+ * Gửi JSON response và đồng thời lưu lịch sử chat (user + bot) nếu có session và user đã đăng nhập
  */
 function ai_respond_and_log(
     bool $success,
@@ -52,13 +54,16 @@ function ai_respond_and_log(
     int $currentUserId,
     string $userMessage
 ): void {
-    // Lưu tin nhắn của user
-    if ($userMessage !== '') {
-        ai_save_message($sessionId, $currentUserId, 'user', $userMessage);
-    }
-    // Lưu tin nhắn của bot
-    if ($reply !== '') {
-        ai_save_message($sessionId, $currentUserId, 'bot', $reply);
+    // Chỉ lưu lịch sử nếu user đã đăng nhập
+    if ($currentUserId > 0) {
+        // Lưu tin nhắn của user
+        if ($userMessage !== '') {
+            ai_save_message($sessionId, $currentUserId, 'user', $userMessage);
+        }
+        // Lưu tin nhắn của bot
+        if ($reply !== '') {
+            ai_save_message($sessionId, $currentUserId, 'bot', $reply);
+        }
     }
 
     echo json_encode(
@@ -117,6 +122,40 @@ if ($query === '') {
 
 // Chuẩn hóa về chữ thường để so khớp dễ dàng
 $normalizedQuery = mb_strtolower($query, 'UTF-8');
+
+// Xử lý số đơn giản (1, 2, 3...) để chọn sản phẩm từ danh sách trước đó
+$handledNumberSelection = false;
+if (preg_match('/^\s*(\d+)\s*$/u', trim($query)) && strlen(trim($query)) <= 3) {
+    $num = (int)trim($query);
+    if ($num >= 1 && $num <= 20 && !empty($_SESSION['ai_last_products'])) {
+        // Tách danh sách sản phẩm đã gợi ý (markdown) thành mảng các link theo thứ tự
+        if (preg_match_all('/product_detail\.php\?id=(\d+)/', $_SESSION['ai_last_products'], $mids)) {
+            $idx = $num - 1;
+            if (isset($mids[1][$idx])) {
+                $productId = (int)$mids[1][$idx];
+                // Lấy thông tin sản phẩm và tạo lại context
+                $stmt = $conn->prepare("SELECT * FROM products WHERE id = ? LIMIT 1");
+                if ($stmt) {
+                    $stmt->bind_param('i', $productId);
+                    if ($stmt->execute()) {
+                        $res = $stmt->get_result();
+                        if ($product = $res->fetch_assoc()) {
+                            // Tạo lại context chỉ với sản phẩm được chọn
+                            $info = build_product_info_line($product);
+                            $_SESSION['ai_last_products'] = $info;
+                            $_SESSION['ai_last_question'] = $query;
+                            // Cập nhật query để AI biết đang nói về sản phẩm này
+                            $query = 'Giới thiệu chi tiết về ' . $product['name'];
+                            $normalizedQuery = mb_strtolower($query, 'UTF-8');
+                            $handledNumberSelection = true;
+                        }
+                    }
+                    $stmt->close();
+                }
+            }
+        }
+    }
+}
 
 /**
  * Lấy ID của sản phẩm đầu tiên từ ngữ cảnh AI lưu trong session.
@@ -284,15 +323,26 @@ function get_recommended_product_id_from_query(string $normalizedQuery): ?int
         }
     }
 
-    // 2) Nếu câu hỏi nhắc tới "sản phẩm thứ n", thử lấy theo danh sách đã tư vấn ở session
+    // 2) Nếu câu hỏi nhắc tới "sản phẩm thứ n" hoặc chỉ là số đơn giản, thử lấy theo danh sách đã tư vấn ở session
+    $selectedIndex = null;
+    
+    // Kiểm tra "thứ n" hoặc "thu n"
     if (preg_match('/th(?:ứ|u)\s*(\d+)/u', $sanQuery, $mm)) {
-        $idx = max(1, (int)$mm[1]) - 1;
-        if (!empty($_SESSION['ai_last_products'])) {
-            // Tách danh sách sản phẩm đã gợi ý (markdown) thành mảng các link theo thứ tự
-            if (preg_match_all('/product_detail\.php\?id=(\d+)/', $_SESSION['ai_last_products'], $mids)) {
-                if (isset($mids[1][$idx])) {
-                    return (int)$mids[1][$idx];
-                }
+        $selectedIndex = max(1, (int)$mm[1]) - 1;
+    }
+    // Kiểm tra số đơn giản (1-10) - chỉ khi câu hỏi rất ngắn (có thể là chọn số)
+    elseif (preg_match('/^\s*(\d+)\s*$/u', trim($sanQuery)) && strlen(trim($sanQuery)) <= 3) {
+        $num = (int)trim($sanQuery);
+        if ($num >= 1 && $num <= 20) {
+            $selectedIndex = $num - 1;
+        }
+    }
+    
+    if ($selectedIndex !== null && !empty($_SESSION['ai_last_products'])) {
+        // Tách danh sách sản phẩm đã gợi ý (markdown) thành mảng các link theo thứ tự
+        if (preg_match_all('/product_detail\.php\?id=(\d+)/', $_SESSION['ai_last_products'], $mids)) {
+            if (isset($mids[1][$selectedIndex])) {
+                return (int)$mids[1][$selectedIndex];
             }
         }
     }
@@ -549,27 +599,42 @@ foreach ($contextLaptopWords as $cw) {
     }
 }
 
-// Phát hiện có nhắc tới linh kiện cụ thể
+// Phát hiện có nhắc tới linh kiện cụ thể - kiểm tra kỹ hơn
 $hasComponent = false;
+$detectedComponentEarly = '';
 foreach ($componentWords as $cw) {
+    // Kiểm tra trong câu hỏi gốc
     if (mb_stripos($normalized, $cw, 0, 'UTF-8') !== false) {
         $hasComponent = true;
+        $detectedComponentEarly = $cw;
+        // Đảm bảo component được thêm vào keywords
+        if (!in_array($cw, $keywords, true)) {
+            $keywords[] = $cw;
+        }
         break;
     }
 }
 
-// Auto-thêm 'laptop' khi thuộc ngữ cảnh laptop và không nhắc tới linh kiện
+// Auto-thêm 'laptop' CHỈ KHI không có component và thuộc ngữ cảnh laptop
 if ($hasContextLaptop && !$hasComponent && !in_array('laptop', $keywords, true)) {
     $keywords[] = 'laptop';
 }
 
 // Auto-thêm 'laptop' theo ngân sách cao nếu người dùng chỉ hỏi mức giá chung
+// NHƯNG CHỈ KHI KHÔNG CÓ COMPONENT
 $hasPriceIntent = ($priceFilterType !== '' && $priceFilterValue !== null);
 $mentionsAccessories = (mb_stripos($normalized, 'phụ kiện', 0, 'UTF-8') !== false) ||
                       (mb_stripos($normalized, 'phu kien', 0, 'UTF-8') !== false) ||
                       (mb_stripos($normalized, 'accessory', 0, 'UTF-8') !== false);
 if ($hasPriceIntent && $priceFilterValue >= 10000000 && !$hasComponent && !$mentionsAccessories && !in_array('laptop', $keywords, true)) {
     $keywords[] = 'laptop';
+}
+
+// Nếu có component, LOẠI BỎ 'laptop' khỏi keywords để tránh tìm nhầm
+if ($hasComponent && in_array('laptop', $keywords, true)) {
+    $keywords = array_values(array_filter($keywords, function($kw) {
+        return $kw !== 'laptop';
+    }));
 }
 
 /* ============================================================
@@ -579,7 +644,80 @@ if ($hasPriceIntent && $priceFilterValue >= 10000000 && !$hasComponent && !$ment
 $params = [];
 $whereClauses = [];
 
-// Điều kiện theo từ khóa
+// Phát hiện component trong keywords hoặc trong câu hỏi gốc
+// Ưu tiên dùng component đã phát hiện sớm
+$detectedComponent = $detectedComponentEarly;
+// Nếu chưa có, tìm trong keywords
+if ($detectedComponent === '') {
+    foreach ($componentWords as $comp) {
+        if (in_array($comp, $keywords, true)) {
+            $detectedComponent = $comp;
+            break;
+        }
+    }
+}
+// Nếu vẫn chưa có, tìm trong câu hỏi gốc
+if ($detectedComponent === '') {
+    foreach ($componentWords as $comp) {
+        if (mb_stripos($normalized, $comp, 0, 'UTF-8') !== false) {
+            $detectedComponent = $comp;
+            // Thêm vào keywords nếu chưa có
+            if (!in_array($comp, $keywords, true)) {
+                $keywords[] = $comp;
+            }
+            break;
+        }
+    }
+}
+
+// Nếu có cả brand và component, ưu tiên tìm sản phẩm có CẢ HAI
+if ($brand !== '' && $detectedComponent !== '') {
+    // Điều kiện bắt buộc: phải có cả brand VÀ component
+    $brandComponentCond = [];
+    
+    // Brand phải có trong name hoặc description hoặc specs
+    $brandCond = [];
+    foreach (['name','description','specs'] as $col) {
+        $brandCond[] = "LOWER($col) LIKE ?";
+        $params[] = '%' . $brand . '%';
+    }
+    $brandComponentCond[] = '(' . implode(' OR ', $brandCond) . ')';
+    
+    // Component phải có trong name hoặc description hoặc category hoặc specs
+    $compCond = [];
+    foreach (['name','description','category','specs'] as $col) {
+        $compCond[] = "LOWER($col) LIKE ?";
+        $params[] = '%' . $detectedComponent . '%';
+    }
+    $brandComponentCond[] = '(' . implode(' OR ', $compCond) . ')';
+    
+    // Kết hợp bằng AND để đảm bảo có cả hai
+    $whereClauses[] = '(' . implode(' AND ', $brandComponentCond) . ')';
+    
+    // Loại bỏ brand và component đã dùng khỏi keywords để tránh lặp lại
+    $keywords = array_filter($keywords, function($kw) use ($brand, $detectedComponent) {
+        return $kw !== $brand && $kw !== $detectedComponent;
+    });
+    $keywords = array_values($keywords); // Re-index array
+}
+
+// Nếu có component nhưng chưa có trong whereClauses (chưa có brand+component), thêm điều kiện component
+if ($detectedComponent !== '' && empty($whereClauses)) {
+    $compWhere = [];
+    foreach (['name','description','category','specs'] as $col) {
+        $compWhere[] = "LOWER($col) LIKE ?";
+        $params[] = '%' . $detectedComponent . '%';
+    }
+    $whereClauses[] = '(' . implode(' OR ', $compWhere) . ')';
+    
+    // Loại bỏ component và laptop khỏi keywords để tránh lặp
+    $keywords = array_filter($keywords, function($kw) use ($detectedComponent) {
+        return $kw !== $detectedComponent && $kw !== 'laptop';
+    });
+    $keywords = array_values($keywords);
+}
+
+// Điều kiện theo từ khóa còn lại
 if (!empty($keywords)) {
     $keywordConds = [];
     foreach ($keywords as $kw) {
@@ -592,8 +730,15 @@ if (!empty($keywords)) {
         // Mỗi keyword hình thành một nhóm OR
         $keywordConds[] = '(' . implode(' OR ', $subCond) . ')';
     }
-    // Kết hợp tất cả các keyword bằng OR (sản phẩm chỉ cần khớp với ít nhất 1 keyword)
-    $whereClauses[] = '(' . implode(' OR ', $keywordConds) . ')';
+    // Nếu đã có điều kiện brand+component hoặc component thì thêm keywords bằng AND
+    // Nếu chưa có thì dùng OR như cũ
+    if (!empty($whereClauses)) {
+        // Đã có điều kiện, thêm keywords bằng AND để tăng độ chính xác
+        $whereClauses[] = '(' . implode(' OR ', $keywordConds) . ')';
+    } else {
+        // Chưa có điều kiện nào, dùng OR như cũ
+        $whereClauses[] = '(' . implode(' OR ', $keywordConds) . ')';
+    }
 }
 
 // Điều kiện theo giá
@@ -625,13 +770,39 @@ if (empty($whereClauses)) {
 // Gộp điều kiện WHERE
 $whereSql = implode(' AND ', $whereClauses);
 
-// Xác định ORDER BY: nếu có filter giá max thì sắp xếp giá tăng dần để thấy sản phẩm rẻ trước,
-// nếu có filter giá min hoặc không có filter thì sắp xếp giảm dần để đưa sản phẩm đắt trước
+// Xác định ORDER BY: ưu tiên sản phẩm khớp nhiều keywords hơn
 $orderSql = '';
 if ($priceFilterType === 'max') {
     $orderSql = 'ORDER BY COALESCE(sale_price, price) ASC';
 } else {
-    $orderSql = 'ORDER BY COALESCE(sale_price, price) DESC';
+    // Nếu có component, ưu tiên sản phẩm có component trong name và category
+    if ($detectedComponent !== '') {
+        $escapedComponent = $conn->real_escape_string($detectedComponent);
+        if ($brand !== '') {
+            // Có cả brand và component
+            $escapedBrand = $conn->real_escape_string($brand);
+            $orderSql = "ORDER BY 
+                CASE 
+                    WHEN LOWER(name) LIKE '%{$escapedBrand}%' AND LOWER(name) LIKE '%{$escapedComponent}%' THEN 1
+                    WHEN LOWER(name) LIKE '%{$escapedComponent}%' AND LOWER(category) LIKE '%{$escapedComponent}%' THEN 2
+                    WHEN LOWER(name) LIKE '%{$escapedBrand}%' OR LOWER(name) LIKE '%{$escapedComponent}%' THEN 3
+                    ELSE 4
+                END,
+                COALESCE(sale_price, price) DESC";
+        } else {
+            // Chỉ có component - ưu tiên component trong name và category, loại bỏ laptop
+            $orderSql = "ORDER BY 
+                CASE 
+                    WHEN LOWER(name) LIKE '%{$escapedComponent}%' AND LOWER(category) LIKE '%{$escapedComponent}%' THEN 1
+                    WHEN LOWER(name) LIKE '%{$escapedComponent}%' THEN 2
+                    WHEN LOWER(name) NOT LIKE '%laptop%' AND LOWER(category) LIKE '%{$escapedComponent}%' THEN 3
+                    ELSE 4
+                END,
+                COALESCE(sale_price, price) DESC";
+        }
+    } else {
+        $orderSql = 'ORDER BY COALESCE(sale_price, price) DESC';
+    }
 }
 
 // SQL cuối cùng
@@ -639,6 +810,7 @@ $sql = "SELECT * FROM products WHERE $whereSql $orderSql LIMIT 20";
 
 // Thực thi truy vấn
 $info = '';
+$foundProducts = false;
 $stmt = $conn->prepare($sql);
 if ($stmt) {
     // Gán tham số vào prepared statement
@@ -659,20 +831,117 @@ if ($stmt) {
         $res = $stmt->get_result();
         while ($row = $res->fetch_assoc()) {
             $info .= build_product_info_line($row);
+            $foundProducts = true;
         }
         $res->free();
     }
     $stmt->close();
 }
 
-// Lưu ngữ cảnh nếu tìm được sản phẩm
-if ($info !== '') {
+// Nếu có brand+component nhưng không tìm được sản phẩm, fallback về OR
+if (!$foundProducts && $brand !== '' && $detectedComponent !== '') {
+    // Thử lại với OR thay vì AND
+    $fallbackParams = [];
+    $fallbackWhere = [];
+    
+    // Brand hoặc component trong bất kỳ trường nào
+    $fallbackCond = [];
+    foreach (['name','description','category','specs'] as $col) {
+        $fallbackCond[] = "(LOWER($col) LIKE ? OR LOWER($col) LIKE ?)";
+        $fallbackParams[] = '%' . $brand . '%';
+        $fallbackParams[] = '%' . $detectedComponent . '%';
+    }
+    $fallbackWhere[] = '(' . implode(' OR ', $fallbackCond) . ')';
+    
+    // Thêm điều kiện giá nếu có
+    if ($priceFilterType !== '' && $priceFilterValue !== null) {
+        if ($priceFilterType === 'max') {
+            $fallbackWhere[] = 'COALESCE(sale_price, price) <= ?';
+        } else {
+            $fallbackWhere[] = 'COALESCE(sale_price, price) >= ?';
+        }
+        $fallbackParams[] = $priceFilterValue;
+    }
+    
+    $fallbackSql = "SELECT * FROM products WHERE " . implode(' AND ', $fallbackWhere) . " " . $orderSql . " LIMIT 20";
+    
+    $stmtFallback = $conn->prepare($fallbackSql);
+    if ($stmtFallback) {
+        if (!empty($fallbackParams)) {
+            $types = '';
+            foreach ($fallbackParams as $p) {
+                if (is_int($p) || is_float($p)) {
+                    $types .= 'd';
+                } else {
+                    $types .= 's';
+                }
+            }
+            $stmtFallback->bind_param($types, ...$fallbackParams);
+        }
+        if ($stmtFallback->execute()) {
+            $res = $stmtFallback->get_result();
+            $info = '';
+            while ($row = $res->fetch_assoc()) {
+                $info .= build_product_info_line($row);
+                $foundProducts = true;
+            }
+            $res->free();
+        }
+        $stmtFallback->close();
+    }
+}
+
+// Nếu vẫn không tìm được và có brand, thử tìm chỉ theo brand
+if (!$foundProducts && $brand !== '') {
+    $brandOnlyParams = [];
+    $brandOnlyWhere = ['(LOWER(name) LIKE ? OR LOWER(description) LIKE ? OR LOWER(category) LIKE ? OR LOWER(specs) LIKE ?)'];
+    for ($i = 0; $i < 4; $i++) {
+        $brandOnlyParams[] = '%' . $brand . '%';
+    }
+    
+    if ($priceFilterType !== '' && $priceFilterValue !== null) {
+        if ($priceFilterType === 'max') {
+            $brandOnlyWhere[] = 'COALESCE(sale_price, price) <= ?';
+        } else {
+            $brandOnlyWhere[] = 'COALESCE(sale_price, price) >= ?';
+        }
+        $brandOnlyParams[] = $priceFilterValue;
+    }
+    
+    $brandOnlySql = "SELECT * FROM products WHERE " . implode(' AND ', $brandOnlyWhere) . " " . $orderSql . " LIMIT 20";
+    
+    $stmtBrand = $conn->prepare($brandOnlySql);
+    if ($stmtBrand) {
+        $types = '';
+        foreach ($brandOnlyParams as $p) {
+            if (is_int($p) || is_float($p)) {
+                $types .= 'd';
+            } else {
+                $types .= 's';
+            }
+        }
+        $stmtBrand->bind_param($types, ...$brandOnlyParams);
+        if ($stmtBrand->execute()) {
+            $res = $stmtBrand->get_result();
+            $info = '';
+            while ($row = $res->fetch_assoc()) {
+                $info .= build_product_info_line($row);
+                $foundProducts = true;
+            }
+            $res->free();
+        }
+        $stmtBrand->close();
+    }
+}
+
+// Lưu ngữ cảnh nếu tìm được sản phẩm (trừ khi đã xử lý số selection)
+if ($info !== '' && !$handledNumberSelection) {
     $_SESSION['ai_last_products'] = $info;
     $_SESSION['ai_last_question'] = $query;
 }
 
-// Nếu không có sản phẩm mới mà đã có ngữ cảnh trước -> dùng lại
-if ($info === '' && !empty($_SESSION['ai_last_products'])) {
+// Nếu không có sản phẩm mới mà đã có ngữ cảnh trước -> dùng lại (trừ khi đã xử lý số)
+if ($info === '' && !empty($_SESSION['ai_last_products']) && !$handledNumberSelection) {
     $info = $_SESSION['ai_last_products'];
 }
 
@@ -728,8 +997,7 @@ if ($info !== '') {
    Gọi API Gemini
    ============================================================ */
 
-// Lấy API key từ biến môi trường
-$apiKey = '' ?: '';
+$apiKey = 'AIzaSyCwxFYtseamm6v5mzzX-TOjhUoq2fdWV3E' ?: '';
 
 if (!$apiKey) {
     ai_respond_and_log(false, 'Chưa cấu hình khóa API Gemini.', $sessionId, $currentUserId, $query);
@@ -738,7 +1006,7 @@ if (!function_exists('curl_init')) {
     ai_respond_and_log(false, 'Máy chủ không hỗ trợ cURL.', $sessionId, $currentUserId, $query);
 }
 
-// Chọn model; dùng phiên bản mới nhất để tránh 404
+// Chọn model
 $model = 'gemini-2.5-flash';
 
 $url = 'https://generativelanguage.googleapis.com/v1beta/models/'
@@ -764,7 +1032,7 @@ $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlErr  = curl_error($ch);
 curl_close($ch);
 
-// Ghi log để debug khi cần
+// Ghi log
 file_put_contents(__DIR__ . '/ai_support_log.txt',
     date('Y-m-d H:i:s') . " HTTP:$httpCode\n" .
     "CURL_ERR: $curlErr\n" .

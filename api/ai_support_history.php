@@ -18,6 +18,112 @@ if ($currentUserId <= 0) {
     exit;
 }
 
+// Hàm xóa một session và tất cả tin nhắn của nó
+function deleteSessionAndMessages($conn, $sessionId, $userId) {
+    // Xóa tất cả tin nhắn của session này
+    $stmtDeleteMsg = $conn->prepare(
+        "DELETE FROM ai_chat_messages WHERE session_id = ? AND user_id = ?"
+    );
+    if ($stmtDeleteMsg) {
+        $stmtDeleteMsg->bind_param('ii', $sessionId, $userId);
+        $stmtDeleteMsg->execute();
+        $stmtDeleteMsg->close();
+    }
+    
+    // Xóa session
+    $stmtDeleteSession = $conn->prepare(
+        "DELETE FROM ai_chat_sessions WHERE id = ? AND user_id = ?"
+    );
+    if ($stmtDeleteSession) {
+        $stmtDeleteSession->bind_param('ii', $sessionId, $userId);
+        $result = $stmtDeleteSession->execute();
+        $stmtDeleteSession->close();
+        return $result;
+    }
+    return false;
+}
+
+// Tự động xóa các cuộc trò chuyện cũ hơn 30 ngày khi load danh sách
+function autoCleanOldSessions($conn, $userId, $daysOld = 30) {
+    $cutoffDate = date('Y-m-d H:i:s', strtotime("-{$daysOld} days"));
+    
+    // Lấy danh sách sessions cũ cần xóa
+    $stmt = $conn->prepare(
+        "SELECT id FROM ai_chat_sessions 
+         WHERE user_id = ? AND updated_at < ?"
+    );
+    if ($stmt) {
+        $stmt->bind_param('is', $userId, $cutoffDate);
+        if ($stmt->execute()) {
+            $res = $stmt->get_result();
+            $deletedCount = 0;
+            while ($row = $res->fetch_assoc()) {
+                if (deleteSessionAndMessages($conn, $row['id'], $userId)) {
+                    $deletedCount++;
+                }
+            }
+            $stmt->close();
+            return $deletedCount;
+        }
+        $stmt->close();
+    }
+    return 0;
+}
+
+// Xử lý xóa session nếu có action = 'delete'
+$action = isset($input['action']) ? $input['action'] : (isset($_GET['action']) ? $_GET['action'] : '');
+if ($action === 'delete') {
+    $deleteSessionId = isset($input['session_id']) ? (int)$input['session_id'] : (isset($_GET['session_id']) ? (int)$_GET['session_id'] : 0);
+    
+    if ($deleteSessionId <= 0) {
+        echo json_encode(['success' => false, 'message' => 'ID session không hợp lệ']);
+        exit;
+    }
+    
+    // Kiểm tra session có thuộc về user này không
+    $stmtCheck = $conn->prepare(
+        "SELECT id FROM ai_chat_sessions WHERE id = ? AND user_id = ? LIMIT 1"
+    );
+    if ($stmtCheck) {
+        $stmtCheck->bind_param('ii', $deleteSessionId, $currentUserId);
+        $stmtCheck->execute();
+        $resCheck = $stmtCheck->get_result();
+        if (!$resCheck->fetch_assoc()) {
+            $stmtCheck->close();
+            echo json_encode(['success' => false, 'message' => 'Cuộc trò chuyện không tồn tại hoặc không thuộc tài khoản này']);
+            exit;
+        }
+        $stmtCheck->close();
+    }
+    
+    // Xóa session sử dụng hàm helper
+    if (deleteSessionAndMessages($conn, $deleteSessionId, $currentUserId)) {
+        echo json_encode([
+            'success' => true,
+            'message' => 'Đã xóa cuộc trò chuyện thành công'
+        ], JSON_UNESCAPED_UNICODE);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Không thể xóa cuộc trò chuyện']);
+    }
+    exit;
+}
+
+// Xử lý xóa tất cả cuộc trò chuyện cũ
+if ($action === 'delete_old') {
+    $daysOld = isset($input['days']) ? (int)$input['days'] : 30;
+    if ($daysOld < 1) {
+        $daysOld = 30;
+    }
+    
+    $deletedCount = autoCleanOldSessions($conn, $currentUserId, $daysOld);
+    echo json_encode([
+        'success' => true,
+        'message' => "Đã xóa {$deletedCount} cuộc trò chuyện cũ thành công",
+        'deleted_count' => $deletedCount
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 $sessionId = 0;
 if (isset($input['session_id'])) {
     $sessionId = (int)$input['session_id'];
@@ -73,6 +179,9 @@ if ($sessionId > 0) {
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
+
+// Tự động xóa các cuộc trò chuyện cũ hơn 30 ngày trước khi lấy danh sách
+autoCleanOldSessions($conn, $currentUserId, 30);
 
 // Lấy danh sách tất cả cuộc trò chuyện của user (sắp xếp mới nhất)
 $sessions = [];
